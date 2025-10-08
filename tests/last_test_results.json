@@ -1,0 +1,8 @@
+{
+  "status": "failed",
+  "return_code": 5,
+  "duration": 0.992529,
+  "timestamp": "2025-09-18T09:24:22.063292",
+  "stdout": "\n=============================== warnings summary ===============================\ntests/test-quality-service.py:441\n  /data/maestro-services/tests/test-quality-service.py:441: DeprecationWarning: invalid escape sequence \\.\n    undocumented_code = \"\"\"\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n---------- generated xml file: /data/maestro-services/tests/junit.xml ----------\n85 deselected, 1 warning in 0.65s\n",
+  "stderr": ""
+}

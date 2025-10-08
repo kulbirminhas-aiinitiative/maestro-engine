@@ -1,0 +1,65 @@
+# MAESTRO Engine - Development Configuration
+#
+# Overrides for local development environment
+
+service:
+  environment: development
+  port: 5000
+
+# Development dependencies (localhost)
+dependencies:
+  redis:
+    url: redis://localhost:6379/0
+  postgresql:
+    url: postgresql://localhost:5432/maestro_dev
+  template_service:
+    url: http://localhost:9600
+  quality_fabric:
+    url: http://localhost:8000
+
+# Development orchestration
+orchestration:
+  execution_mode: parallel
+  max_parallel_personas: 2  # Lower for dev to avoid resource exhaustion
+  enable_mcp: true
+  enable_rag: true
+  enable_quality_gates: false  # Disable for faster iteration
+
+# Relaxed resilience for development
+resilience:
+  circuit_breakers:
+    template_service:
+      failure_threshold: 10  # More lenient
+      timeout: 30  # Shorter timeout
+
+  retry_policies:
+    template_service:
+      max_retries: 2  # Fewer retries for faster feedback
+
+  timeouts:
+    template_fetch: 15
+    quality_validation: 60
+    persona_execution: 120  # Shorter for dev
+
+# Verbose logging for development
+logging:
+  level: DEBUG
+  format: text  # More readable than JSON
+  enable_colors: true
+
+# Permissive CORS for development
+security:
+  cors_origins: '*'
+  jwt_expiration: 86400  # 24 hours
+
+# Enable all monitoring for development
+monitoring:
+  enable_prometheus: true
+  enable_tracing: true
+
+# All features enabled in development
+features:
+  enable_accelerator_mode: true
+  enable_guardian_mode: true
+  enable_template_extraction: true
+  enable_audit_logging: true

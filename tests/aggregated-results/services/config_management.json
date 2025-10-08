@@ -1,0 +1,30 @@
+{
+  "name": "config_management",
+  "junit": {
+    "name": "pytest",
+    "tests": 15,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 2,
+    "time": 23.456,
+    "timestamp": "2025-09-20T06:00:00",
+    "passed": 12
+  },
+  "coverage": {
+    "line_rate": 86.0,
+    "branch_rate": 84.0,
+    "lines_covered": 215,
+    "lines_valid": 250,
+    "branches_covered": 38,
+    "branches_valid": 45
+  },
+  "summary": {
+    "service": "config_management",
+    "timestamp": "2025-09-20T06:00:00Z",
+    "test_type": "all",
+    "git_commit": "3ea4602",
+    "git_branch": "enhanced-architecture",
+    "workflow_run_id": "test-run-001",
+    "workflow_run_number": "1"
+  }
+}

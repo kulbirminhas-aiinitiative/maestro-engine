@@ -1,0 +1,63 @@
+# Base Docker image for MAESTRO Engine services
+# Shared layers to optimize build times and image size
+
+FROM python:3.11-slim as base
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    POETRY_VERSION=1.8.0 \
+    POETRY_HOME="/opt/poetry" \
+    POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_IN_PROJECT=true \
+    POETRY_VIRTUALENVS_CREATE=true \
+    PATH="/opt/poetry/bin:$PATH"
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    build-essential \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Poetry
+RUN curl -sSL https://install.python-poetry.org | python3 - && \
+    poetry --version
+
+# Set working directory
+WORKDIR /app
+
+# Copy poetry files
+COPY pyproject.toml poetry.lock* ./
+
+# Install dependencies (without dev dependencies for production)
+RUN poetry install --no-root --no-dev
+
+# Runtime stage
+FROM python:3.11-slim as runtime
+
+# Copy Poetry and dependencies from base
+COPY --from=base /opt/poetry /opt/poetry
+COPY --from=base /app/.venv /app/.venv
+
+ENV PATH="/opt/poetry/bin:/app/.venv/bin:$PATH" \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+# Set working directory
+WORKDIR /app
+
+# Create non-root user
+RUN useradd -m -u 1000 maestro && \
+    chown -R maestro:maestro /app
+
+# Copy application code (to be done in service-specific Dockerfiles)
+# This base image provides the foundation
+
+USER maestro
+
+# Health check placeholder (override in service Dockerfiles)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1

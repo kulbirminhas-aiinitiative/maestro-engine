@@ -1,0 +1,183 @@
+# Docker Compose for MAESTRO Engine - Development Environment
+# Usage: docker-compose -f docker-compose.dev.yml up
+
+version: '3.8'
+
+services:
+  # API Gateway - Single entry point (ADR-003)
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    container_name: maestro-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=DEBUG
+      - BFF_SERVICE_URL=http://host.docker.internal:4001
+      - MAESTRO_ENGINE_URL=http://host.docker.internal:5000
+      - TEMPLATE_SERVICE_URL=http://host.docker.internal:9600
+      - RAG_SERVICE_URL=http://rag:9803
+      - MCP_SERVICE_URL=http://mcp:9800
+      - QUALITY_FABRIC_URL=http://host.docker.internal:8000
+      - COORDINATOR_SERVICE_URL=http://coordinator:8002
+      - ORCHESTRATION_SERVICE_URL=http://orchestration:8004
+      - FRONTEND_URL=http://localhost:4200
+      - JWT_SECRET=dev-secret-change-in-production
+    volumes:
+      - ./src:/app/src:ro
+      - ./config:/app/config:ro
+      - ./logs:/app/logs
+    networks:
+      - maestro-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # Service Coordinator - API Gateway
+  coordinator:
+    build:
+      context: .
+      dockerfile: Dockerfile.coordinator
+    container_name: maestro-coordinator
+    ports:
+      - "8002:8002"
+    environment:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=DEBUG
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - MAESTRO_SERVICE_HOST=coordinator
+      - MAESTRO_MCP_SERVICE_URL=http://mcp:9800
+      - MAESTRO_ORCHESTRATION_SERVICE_URL=http://orchestration:8004
+      - MAESTRO_RAG_SERVICE_URL=http://rag:9803
+      - MAESTRO_TEMPLATES_SERVICE_URL=http://templates:8001
+      # API Gateway integration (ADR-003)
+      - GATEWAY_URL=http://gateway:8080
+      - SERVICE_NAME=maestro-coordinator
+    volumes:
+      - ./src:/app/src:ro
+      - ./config:/app/config:ro
+      - ./logs:/app/logs
+      - /home/ec2-user/projects/shared/packages:/shared/packages:ro
+    networks:
+      - maestro-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # MCP Service - Hot Claude sessions & caching
+  mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile.mcp
+    container_name: maestro-mcp
+    ports:
+      - "9800:9800"
+    environment:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=DEBUG
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - MCP_CACHE_DIR=/tmp/mcp_cache
+      - MCP_CACHE_TTL=3600
+      # API Gateway integration (ADR-003)
+      - GATEWAY_URL=http://gateway:8080
+      - SERVICE_NAME=maestro-mcp
+    volumes:
+      - ./src:/app/src:ro
+      - ./config:/app/config:ro
+      - mcp-cache:/tmp/mcp_cache
+      - ./logs:/app/logs
+    networks:
+      - maestro-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9800/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # Orchestration Gateway - Workflow coordination
+  orchestration:
+    build:
+      context: .
+      dockerfile: Dockerfile.orchestration
+    container_name: maestro-orchestration
+    ports:
+      - "8004:8004"
+    environment:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=DEBUG
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - MAESTRO_MCP_SERVICE_URL=http://mcp:9800
+      # API Gateway integration (ADR-003)
+      - GATEWAY_URL=http://gateway:8080
+      - SERVICE_NAME=maestro-orchestration
+    volumes:
+      - ./src:/app/src:ro
+      - ./config:/app/config:ro
+      - ./logs:/app/logs
+    networks:
+      - maestro-network
+    depends_on:
+      - mcp
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # RAG Service - Vector search & embeddings
+  rag:
+    build:
+      context: .
+      dockerfile: Dockerfile.rag
+    container_name: maestro-rag
+    ports:
+      - "9803:9803"
+    environment:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=DEBUG
+      - CHROMA_PERSIST_DIR=/app/chroma_db
+      - RAG_EMBEDDING_MODEL=all-MiniLM-L6-v2
+      # API Gateway integration (ADR-003)
+      - GATEWAY_URL=http://gateway:8080
+      - SERVICE_NAME=maestro-rag
+    volumes:
+      - ./src:/app/src:ro
+      - ./config:/app/config:ro
+      - chroma-data:/app/chroma_db
+      - ./logs:/app/logs
+    networks:
+      - maestro-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9803/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  maestro-network:
+    external: true
+    name: maestro-dev-network
+
+volumes:
+  mcp-cache:
+    name: maestro-mcp-cache-dev
+  chroma-data:
+    name: maestro-chroma-data-dev

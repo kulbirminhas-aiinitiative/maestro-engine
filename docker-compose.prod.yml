@@ -1,0 +1,243 @@
+# Docker Compose for MAESTRO Engine - Production Environment
+# Usage: docker-compose -f docker-compose.prod.yml up -d
+
+version: '3.8'
+
+services:
+  # API Gateway - Single entry point (ADR-003)
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    container_name: maestro-gateway-prod
+    ports:
+      - "8080:8080"
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - BFF_SERVICE_URL=${BFF_SERVICE_URL:-http://host.docker.internal:4001}
+      - MAESTRO_ENGINE_URL=${MAESTRO_ENGINE_URL:-http://host.docker.internal:5000}
+      - TEMPLATE_SERVICE_URL=${TEMPLATE_SERVICE_URL:-http://host.docker.internal:9600}
+      - RAG_SERVICE_URL=http://rag:9803
+      - MCP_SERVICE_URL=http://mcp:9800
+      - QUALITY_FABRIC_URL=${QUALITY_FABRIC_URL:-http://host.docker.internal:8000}
+      - COORDINATOR_SERVICE_URL=http://coordinator:8002
+      - ORCHESTRATION_SERVICE_URL=http://orchestration:8004
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:4200}
+      - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
+    volumes:
+      - ./config:/app/config:ro
+      - gateway-logs:/app/logs
+    networks:
+      - maestro-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Service Coordinator - API Gateway
+  coordinator:
+    build:
+      context: .
+      dockerfile: Dockerfile.coordinator
+    container_name: maestro-coordinator-prod
+    ports:
+      - "8002:8002"
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - MAESTRO_SERVICE_HOST=coordinator
+      - MAESTRO_MCP_SERVICE_URL=http://mcp:9800
+      - MAESTRO_ORCHESTRATION_SERVICE_URL=http://orchestration:8004
+      - MAESTRO_RAG_SERVICE_URL=http://rag:9803
+      - MAESTRO_TEMPLATES_SERVICE_URL=${MAESTRO_TEMPLATES_SERVICE_URL:-http://templates:8001}
+      - OTEL_ENABLED=${OTEL_ENABLED:-false}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT}
+    volumes:
+      - ./config:/app/config:ro
+      - coordinator-logs:/app/logs
+    networks:
+      - maestro-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # MCP Service - Hot Claude sessions & caching
+  mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile.mcp
+    container_name: maestro-mcp-prod
+    ports:
+      - "9800:9800"
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - MCP_CACHE_DIR=/tmp/mcp_cache
+      - MCP_CACHE_TTL=${MCP_CACHE_TTL:-3600}
+    volumes:
+      - ./config:/app/config:ro
+      - mcp-cache:/tmp/mcp_cache
+      - mcp-logs:/app/logs
+    networks:
+      - maestro-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9800/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Orchestration Gateway - Workflow coordination
+  orchestration:
+    build:
+      context: .
+      dockerfile: Dockerfile.orchestration
+    container_name: maestro-orchestration-prod
+    ports:
+      - "8004:8004"
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - MAESTRO_MCP_SERVICE_URL=http://mcp:9800
+    volumes:
+      - ./config:/app/config:ro
+      - orchestration-logs:/app/logs
+    networks:
+      - maestro-network
+    depends_on:
+      - mcp
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # RAG Service - Vector search & embeddings
+  rag:
+    build:
+      context: .
+      dockerfile: Dockerfile.rag
+    container_name: maestro-rag-prod
+    ports:
+      - "9803:9803"
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - CHROMA_PERSIST_DIR=/app/chroma_db
+      - RAG_EMBEDDING_MODEL=${RAG_EMBEDDING_MODEL:-all-MiniLM-L6-v2}
+    volumes:
+      - ./config:/app/config:ro
+      - chroma-data:/app/chroma_db
+      - rag-logs:/app/logs
+    networks:
+      - maestro-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9803/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  maestro-network:
+    driver: bridge
+    name: maestro-prod-network
+
+volumes:
+  mcp-cache:
+    name: maestro-mcp-cache-prod
+  chroma-data:
+    name: maestro-chroma-data-prod
+  gateway-logs:
+    name: maestro-gateway-logs-prod
+  coordinator-logs:
+    name: maestro-coordinator-logs-prod
+  mcp-logs:
+    name: maestro-mcp-logs-prod
+  orchestration-logs:
+    name: maestro-orchestration-logs-prod
+  rag-logs:
+    name: maestro-rag-logs-prod

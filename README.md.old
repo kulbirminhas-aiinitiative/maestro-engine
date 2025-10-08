@@ -1,0 +1,254 @@
+# MAESTRO Backend Execution Engine
+
+A clean, production-ready backend execution engine for MAESTRO, focusing on MCP/UTCP orchestration, RAG (Retrieval-Augmented Generation), and enterprise template integration.
+
+## Overview
+
+The MAESTRO Engine is a streamlined backend system extracted from the full MAESTRO V2 platform, containing only the essential components for:
+
+- **MCP/UTCP Orchestration**: Model Context Protocol and Universal Tool Calling Protocol for AI agent coordination
+- **Workflow Orchestration**: Adaptive and parallel workflow execution
+- **RAG Integration**: Vector-based retrieval and augmented generation
+- **Template Management**: Enterprise template repository and Quality Fabric integration
+
+## Architecture
+
+```
+maestro-engine/
+├── src/
+│   ├── mcp/                    # MCP/UTCP core orchestration
+│   ├── orchestration/          # Workflow coordination
+│   ├── rag/                    # RAG tools and sessions
+│   ├── templates/              # Template integration
+│   └── utils/                  # Common utilities
+├── tests/                      # Test suite
+├── config/                     # Configuration files
+└── docs/                       # Documentation
+```
+
+## Key Components
+
+### MCP/UTCP Module (`src/mcp/`)
+- **enhanced_lean_ultimate_mega_team_utcp.py**: Enhanced UTCP implementation for multi-agent teams
+- **hot_claude_live_backend_sdk.py**: Live backend SDK for Claude AI integration
+- **mcp_enhanced_lean_ultimate_mega_team.py**: MCP-based enhanced orchestration
+
+### Orchestration Module (`src/orchestration/`)
+- **maestro_unified_orchestration_gateway.py**: Unified gateway for orchestration
+- **adaptive_workflow_orchestrator.py**: Adaptive workflow execution
+- **maestro_parallel_orchestrator.py**: Parallel task execution
+
+### RAG Module (`src/rag/`)
+- **rag_tools.py**: RAG utilities and vector operations
+- **claude_rag_session.py**: Claude-integrated RAG sessions
+
+### Templates Module (`src/templates/`)
+- **enterprise_template_repository/**: Enterprise template registry
+- **maestro_templates_integration.py**: Template integration layer
+- **quality_fabric_template_bridge.py**: Bridge to Quality Fabric system
+- **quality_to_template_transformer.py**: Quality-to-template transformation
+
+## Shared Libraries Integration
+
+The MAESTRO Engine integrates with production-ready shared libraries:
+
+- **maestro-core-api**: Enterprise FastAPI framework with auth, health checks, and UTCP support
+- **maestro-core-logging**: Structured logging with OpenTelemetry support
+- **maestro-core-config**: Configuration management with encryption and validation
+
+Location: `/home/ec2-user/projects/shared/packages/`
+
+## Installation
+
+### Prerequisites
+- Python 3.11+
+- Poetry (dependency management)
+- Access to shared libraries
+
+### Setup
+
+1. **Clone/navigate to the project**:
+```bash
+cd /home/ec2-user/projects/maestro-engine
+```
+
+2. **Install dependencies**:
+```bash
+poetry install
+```
+
+3. **Configure environment**:
+```bash
+cp .env.template .env
+# Edit .env with your API keys and configuration
+```
+
+4. **Verify shared library access**:
+```bash
+poetry run python -c "
+import sys
+sys.path.insert(0, '/home/ec2-user/projects/shared/packages/core-api/src')
+sys.path.insert(0, '/home/ec2-user/projects/shared/packages/core-logging/src')
+sys.path.insert(0, '/home/ec2-user/projects/shared/packages/core-config/src')
+from maestro_core_api import MaestroAPI
+from maestro_core_logging import get_logger
+from maestro_core_config import BaseConfig
+print('✓ Shared libraries integrated')
+"
+```
+
+## Usage
+
+### Basic Execution
+
+```python
+import sys
+sys.path.insert(0, '/home/ec2-user/projects/shared/packages/core-api/src')
+sys.path.insert(0, '/home/ec2-user/projects/shared/packages/core-logging/src')
+
+from maestro_core_logging import configure_logging, get_logger
+
+# Configure logging
+configure_logging(
+    service_name="maestro-engine",
+    log_level="INFO"
+)
+
+logger = get_logger(__name__)
+
+# Your orchestration code here
+logger.info("MAESTRO Engine started")
+```
+
+### Using MCP/UTCP
+
+```python
+from src.mcp.enhanced_lean_ultimate_mega_team_utcp import EnhancedLeanUltimateMegaTeamUTCP
+
+# Initialize orchestration
+orchestrator = EnhancedLeanUltimateMegaTeamUTCP(
+    api_key="your_anthropic_api_key"
+)
+
+# Execute workflow
+result = orchestrator.execute(prompt="Your task here")
+```
+
+### Using RAG
+
+```python
+from src.rag.rag_tools import RAGTools
+
+# Initialize RAG
+rag = RAGTools(
+    persist_dir="./chroma_db"
+)
+
+# Add documents
+rag.add_documents(documents)
+
+# Query
+results = rag.query("Your question")
+```
+
+## Configuration
+
+Key environment variables (see `.env.template`):
+
+- `ANTHROPIC_API_KEY`: Your Anthropic API key
+- `MCP_CACHE_DIR`: MCP cache directory
+- `CHROMA_PERSIST_DIR`: ChromaDB persistence directory
+- `LOG_LEVEL`: Logging level (INFO, DEBUG, etc.)
+- `TEMPLATE_REGISTRY_URL`: Template registry endpoint
+
+## Testing
+
+Run the test suite:
+
+```bash
+poetry run pytest
+```
+
+Run with coverage:
+
+```bash
+poetry run pytest --cov=src --cov-report=html
+```
+
+## Development
+
+### Code Quality
+
+```bash
+# Format code
+poetry run black src/
+
+# Sort imports
+poetry run isort src/
+
+# Type checking
+poetry run mypy src/
+
+# Linting
+poetry run flake8 src/
+```
+
+### Adding New Components
+
+1. Create module in appropriate `src/` subdirectory
+2. Add `__init__.py` exports
+3. Add tests in `tests/`
+4. Update this README
+
+## Migration from MAESTRO V2
+
+This engine was extracted from MAESTRO V2 (`/home/ec2-user/projects/maestro-v2/`) with focus on backend execution. The following were migrated:
+
+**Included**:
+- MCP/UTCP orchestration files
+- Workflow orchestration components
+- RAG tools and integration
+- Enterprise template repository
+- Shared library integrations
+- Test suite
+
+**Excluded**:
+- Frontend components (maestro_frontend_v1, maestro_frontend_v2)
+- Archive files and old versions
+- IDE components (maestro_ide)
+- Kubernetes deployment configs
+- Old documentation and markdown files
+
+## API Integration
+
+The engine integrates with:
+
+- **Quality Fabric API**: Template and quality management (http://localhost:8000)
+- **Template Registry**: Enterprise template repository (http://localhost:8001)
+- **Anthropic API**: Claude AI models
+
+## Production Deployment
+
+For production deployment:
+
+1. Set `DEBUG=false` in `.env`
+2. Use strong `JWT_SECRET_KEY`
+3. Configure proper `DATABASE_URL`
+4. Enable `OTEL_ENABLED=true` for monitoring
+5. Use production-grade vector DB for RAG
+
+## Support & Documentation
+
+- **Shared Libraries Docs**: `/home/ec2-user/projects/shared/packages/*/README.md`
+- **MAESTRO V2 Docs**: For historical context
+- **Issues**: Track issues in your issue tracker
+
+## License
+
+Proprietary - MAESTRO Team
+
+---
+
+**Version**: 1.0.0
+**Last Updated**: 2025-10-01
+**Migrated From**: MAESTRO V2

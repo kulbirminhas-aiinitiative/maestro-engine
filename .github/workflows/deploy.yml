@@ -1,0 +1,146 @@
+name: Deploy Pipeline
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        service: [coordinator, mcp, orchestration, rag]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ matrix.service }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.${{ matrix.service }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-dev:
+    name: Deploy to Development
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/develop' || github.event.inputs.environment == 'development'
+    environment:
+      name: development
+      url: https://dev.maestro-engine.example.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to development
+        run: |
+          echo "Deploying to development environment"
+          # Add deployment commands here (e.g., kubectl, docker-compose, etc.)
+
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests"
+          # Add smoke test commands
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event.inputs.environment == 'staging'
+    environment:
+      name: staging
+      url: https://staging.maestro-engine.example.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to staging
+        run: |
+          echo "Deploying to staging environment"
+          # Add deployment commands
+
+      - name: Run integration tests
+        run: |
+          echo "Running integration tests"
+          # Add integration test commands
+
+  deploy-prod:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build, deploy-staging]
+    if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.environment == 'production'
+    environment:
+      name: production
+      url: https://maestro-engine.example.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to production
+        run: |
+          echo "Deploying to production environment"
+          # Add production deployment commands
+
+      - name: Run comprehensive tests
+        run: |
+          echo "Running comprehensive tests"
+          # Add comprehensive test suite
+
+      - name: Health check verification
+        run: |
+          echo "Verifying service health"
+          # Add health check commands
+
+  rollback:
+    name: Rollback on Failure
+    runs-on: ubuntu-latest
+    needs: deploy-prod
+    if: failure()
+    steps:
+      - name: Rollback deployment
+        run: |
+          echo "Rolling back deployment"
+          # Add rollback commands

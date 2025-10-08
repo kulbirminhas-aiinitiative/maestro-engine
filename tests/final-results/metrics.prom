@@ -1,0 +1,23 @@
+# HELP maestro_tests_total Total number of tests executed
+# TYPE maestro_tests_total counter
+maestro_tests_total 29
+
+# HELP maestro_tests_passed Number of tests that passed
+# TYPE maestro_tests_passed counter
+maestro_tests_passed 25
+
+# HELP maestro_tests_failed Number of tests that failed
+# TYPE maestro_tests_failed counter
+maestro_tests_failed 1
+
+# HELP maestro_tests_success_rate Test success rate percentage
+# TYPE maestro_tests_success_rate gauge
+maestro_tests_success_rate 86.21
+
+# HELP maestro_test_coverage Average code coverage percentage
+# TYPE maestro_test_coverage gauge
+maestro_test_coverage 86.0
+
+# HELP maestro_test_duration Total test execution time in seconds
+# TYPE maestro_test_duration gauge
+maestro_test_duration 84.37

@@ -1,0 +1,77 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
+
+# Logs
+*.log
+logs/
+audit_logs/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# MCP Cache
+/tmp/mcp_cache/
+mcp_cache/
+
+# RAG/Vector DB
+chroma_db/
+*.db
+
+# Outputs
+claude_output/
+audit_exports/
+deliverables/
+hive_mesh_output/
+maestro_output/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation builds
+docs/_build/
+
+# Legacy and experimental code (tracked but excluded from linting/CI)
+# Note: These directories are tracked in git but excluded from:
+# - CI/CD linting and testing
+# - Production imports (enforced by pre-commit hooks)
+# See: ADR-007-code-organization.md

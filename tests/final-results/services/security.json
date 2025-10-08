@@ -1,0 +1,13 @@
+{
+  "name": "security",
+  "junit": {
+    "name": "security-tests",
+    "tests": 6,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "time": 15.678,
+    "timestamp": "2025-09-20T06:02:00",
+    "passed": 6
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "summary": {
+    "total_tests": 29,
+    "passed": 25,
+    "failed": 1,
+    "errors": 0,
+    "skipped": 3,
+    "success_rate": 86.21,
+    "total_duration": 84.37,
+    "average_coverage": 86.0,
+    "timestamp": "2025-09-20T06:04:51.163075"
+  },
+  "services": {
+    "config_management": {
+      "name": "config_management",
+      "junit": {
+        "name": "pytest",
+        "tests": 15,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 2,
+        "time": 23.456,
+        "timestamp": "2025-09-20T06:00:00",
+        "passed": 12
+      },
+      "coverage": {
+        "line_rate": 86.0,
+        "branch_rate": 84.0,
+        "lines_covered": 215,
+        "lines_valid": 250,
+        "branches_covered": 38,
+        "branches_valid": 45
+      },
+      "summary": {
+        "service": "config_management",
+        "timestamp": "2025-09-20T06:00:00Z",
+        "test_type": "all",
+        "git_commit": "3ea4602",
+        "git_branch": "enhanced-architecture",
+        "workflow_run_id": "test-run-001",
+        "workflow_run_number": "1"
+      }
+    },
+    "integration": {
+      "name": "integration",
+      "junit": {
+        "name": "integration-tests",
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1,
+        "time": 45.234,
+        "timestamp": "2025-09-20T06:01:00",
+        "passed": 7
+      }
+    },
+    "security": {
+      "name": "security",
+      "junit": {
+        "name": "security-tests",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 15.678,
+        "timestamp": "2025-09-20T06:02:00",
+        "passed": 6
+      }
+    }
+  },
+  "quality_gates": {
+    "success_rate_threshold": 99.0,
+    "coverage_threshold": 80.0,
+    "success_rate_passed": false,
+    "coverage_passed": true,
+    "overall_passed": false
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "session_id": "rag_test_001",
+  "requirement": "Build a simple REST API with the following requirements:\n1. A FastAPI application with CRUD endpoints for a 'Product' resource\n2. Include basic validation using Pydantic models\n3. Add a health check endpoint\n4. Use proper HTTP status codes\n5. Keep it simple and focused - just the core API structure",
+  "output_dir": "/tmp/rag_test_workflow",
+  "created_at": "2025-10-03T22:22:52.763715",
+  "last_updated": "2025-10-03T22:25:18.310392",
+  "completed_personas": [
+    "backend_developer"
+  ],
+  "files_registry": {},
+  "persona_outputs": {
+    "backend_developer": {
+      "files_created": [],
+      "deliverables": {},
+      "duration": 145.545777,
+      "success": true,
+      "executed_at": "2025-10-03T22:25:18.310382"
+    }
+  }
+}

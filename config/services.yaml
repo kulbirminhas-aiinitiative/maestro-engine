@@ -1,0 +1,235 @@
+# MAESTRO Engine Service Registry Configuration
+#
+# Part of ADR-004: Port Allocation Strategy
+#
+# Port Range Strategy:
+#   1000-2999: Reserved (system/well-known)
+#   3000-3999: Frontend services
+#   4000-4999: Backend APIs (user-facing)
+#   5000-5999: Core orchestration engines
+#   6000-6999: Reserved for future use
+#   7000-7999: Reserved for future use
+#   8000-8999: Infrastructure services
+#   9000-9999: Internal microservices
+#   10000+:    Development/testing
+#
+# Services can be overridden via environment variables:
+# MAESTRO_{SERVICE_NAME}_SERVICE_URL=http://custom-host:port
+#
+# Example: MAESTRO_MCP_SERVICE_URL=http://mcp-service:9800
+
+services:
+  # ========================================
+  # Frontend Services (3000-3999)
+  # ========================================
+
+  grafana:
+    port: 3000
+    category: monitoring
+    public: true
+    health: /api/health
+    external: true
+    metadata:
+      description: "Monitoring dashboards"
+      version: "1.0.0"
+
+  frontend:
+    port: 4200
+    category: frontend
+    public: true
+    health: /health
+    external: true
+    metadata:
+      description: "React frontend application"
+      repository: "maestro-frontend"
+
+  # ========================================
+  # User-Facing APIs (4000-4999)
+  # ========================================
+
+  unified_bff:
+    port: 4001
+    category: api
+    public: false
+    health: /health
+    metadata:
+      description: "Accelerator Mode BFF (Backend for Frontend)"
+      features:
+        - "WebSocket chat interface"
+        - "Background builder (Claude SDK)"
+        - "Live HTML preview"
+        - "Session management"
+
+  # ========================================
+  # Core Engines (5000-5999)
+  # ========================================
+
+  maestro_engine:
+    port: 5000
+    category: engine
+    public: false
+    health: /health
+    metadata:
+      description: "Guardian Mode orchestration API"
+      features:
+        - "Persona orchestration"
+        - "SDLC workflow execution"
+        - "MCP event streaming"
+        - "Quality validation"
+
+  # ========================================
+  # Infrastructure (6000-8999)
+  # ========================================
+
+  redis:
+    port: 6379
+    category: infrastructure
+    public: false
+    health: tcp  # Redis PING command
+    external: true
+    metadata:
+      description: "Cache and session storage"
+
+  postgresql:
+    port: 5432
+    category: infrastructure
+    public: false
+    health: tcp
+    external: true
+    metadata:
+      description: "Primary database"
+
+  quality_fabric:
+    port: 8000
+    category: infrastructure
+    public: false
+    health: /api/health
+    external: true
+    metadata:
+      description: "Quality Fabric Testing Platform"
+      repository: "quality-fabric"
+      features:
+        - "AI-powered test generation"
+        - "Autonomous test healing"
+        - "Predictive quality gates"
+        - "Zero-config auto-discovery"
+
+  coordinator:
+    port: 8002
+    category: infrastructure
+    public: false
+    health: /health
+    metadata:
+      description: "Main API gateway and service coordinator"
+      version: "1.0.0"
+
+  orchestration:
+    port: 8004
+    category: infrastructure
+    public: false
+    health: /health
+    metadata:
+      description: "Unified orchestration gateway"
+      features:
+        - "Workflow routing"
+        - "Team coordination"
+        - "Task distribution"
+
+  api_gateway:
+    port: 8080
+    category: gateway
+    public: true
+    health: /health
+    metadata:
+      description: "MAESTRO API Gateway (ADR-003)"
+      version: "1.0.0"
+      features:
+        - "Centralized authentication (JWT validation)"
+        - "Rate limiting (per client/endpoint)"
+        - "CORS handling"
+        - "Circuit breaker integration"
+        - "Request/response logging"
+        - "Response caching"
+        - "Dynamic routing to backend services"
+        - "WebSocket proxying"
+      routes:
+        - "/api/v1/accelerator/* -> unified_bff:4001"
+        - "/api/v1/guardian/* -> maestro_engine:5000"
+        - "/api/v1/templates/* -> templates:9600"
+        - "/api/v1/rag/* -> rag:9803"
+        - "/api/v1/mcp/* -> mcp:9800"
+        - "/api/v1/quality/* -> quality_fabric:8000"
+        - "/api/v1/coordinator/* -> coordinator:8002"
+        - "/api/v1/orchestration/* -> orchestration:8004"
+      note: "Single entry point for all client requests (port 8080)"
+
+  # ========================================
+  # Internal Microservices (9000-9999)
+  # ========================================
+
+  prometheus:
+    port: 9090
+    category: monitoring
+    public: false
+    health: /-/healthy
+    external: true
+    metadata:
+      description: "Metrics collection"
+
+  templates:
+    port: 9600
+    category: microservices
+    public: false
+    health: /health
+    external: true
+    metadata:
+      description: "Enterprise template repository"
+      repository: "maestro-templates"
+      features:
+        - "Template CRUD operations"
+        - "Git-based storage"
+        - "Quality score tracking"
+        - "Semantic search"
+
+  mcp:
+    port: 9800
+    category: microservices
+    public: false
+    health: /health
+    metadata:
+      description: "MCP/UTCP orchestration service"
+      features:
+        - "Hot Claude sessions"
+        - "MCP cache management"
+        - "Session state tracking"
+        - "Audit logging"
+
+  rag:
+    port: 9803
+    category: microservices
+    public: false
+    health: /health
+    metadata:
+      description: "RAG integration service"
+      features:
+        - "Vector embeddings"
+        - "Semantic search"
+        - "Context retrieval"
+
+# Service dependencies
+dependencies:
+  mcp:
+    - coordinator
+  orchestration:
+    - coordinator
+    - mcp
+  rag:
+    - coordinator
+    - mcp
+
+# Health check configuration
+health_check:
+  interval_seconds: 30
+  timeout_seconds: 5
+  unhealthy_threshold: 3
+  healthy_threshold: 2

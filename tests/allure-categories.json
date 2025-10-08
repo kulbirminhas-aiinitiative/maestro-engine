@@ -1,0 +1,50 @@
+[
+  {
+    "name": "Unit Test Failures",
+    "messageRegex": ".*AssertionError.*",
+    "matchedStatuses": ["failed"],
+    "description": "Test assertions that failed during unit testing"
+  },
+  {
+    "name": "Integration Test Failures",
+    "messageRegex": ".*ConnectionError.*|.*TimeoutError.*",
+    "matchedStatuses": ["failed"],
+    "description": "Integration tests that failed due to connectivity issues"
+  },
+  {
+    "name": "Performance Issues",
+    "messageRegex": ".*performance.*|.*timeout.*|.*slow.*",
+    "matchedStatuses": ["failed"],
+    "description": "Tests that failed due to performance degradation"
+  },
+  {
+    "name": "Security Vulnerabilities",
+    "messageRegex": ".*security.*|.*vulnerability.*|.*CVE.*",
+    "matchedStatuses": ["failed"],
+    "description": "Security-related test failures"
+  },
+  {
+    "name": "Flaky Tests",
+    "messageRegex": ".*flaky.*|.*intermittent.*",
+    "matchedStatuses": ["failed", "broken"],
+    "description": "Tests that pass and fail inconsistently"
+  },
+  {
+    "name": "Infrastructure Issues",
+    "messageRegex": ".*docker.*|.*kubernetes.*|.*container.*",
+    "matchedStatuses": ["broken"],
+    "description": "Test failures due to infrastructure problems"
+  },
+  {
+    "name": "API Contract Violations",
+    "messageRegex": ".*contract.*|.*schema.*|.*api.*",
+    "matchedStatuses": ["failed"],
+    "description": "API tests that failed due to contract violations"
+  },
+  {
+    "name": "Dependency Issues",
+    "messageRegex": ".*ImportError.*|.*ModuleNotFoundError.*",
+    "matchedStatuses": ["broken"],
+    "description": "Test failures due to missing dependencies"
+  }
+]

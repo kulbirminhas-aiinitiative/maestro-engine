@@ -1,0 +1,7 @@
+{
+  "success_rate_threshold": 99.0,
+  "coverage_threshold": 80.0,
+  "success_rate_passed": false,
+  "coverage_passed": true,
+  "overall_passed": false
+}

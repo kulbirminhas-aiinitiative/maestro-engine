@@ -1,0 +1,92 @@
+{
+  "session_id": "monday_v2_001",
+  "requirement": "Create an updated version of monday.com - a modern project management platform with task boards, team collaboration, timeline views, and automation workflows",
+  "output_dir": "/tmp/maestro_projects/guardian_monday_v2_001",
+  "created_at": "2025-10-04T12:34:58.089471",
+  "last_updated": "2025-10-04T14:47:52.695865",
+  "completed_personas": [
+    "requirement_analyst",
+    "solution_architect",
+    "security_specialist",
+    "backend_developer",
+    "ui_ux_designer",
+    "frontend_developer",
+    "devops_engineer",
+    "technical_writer",
+    "database_administrator",
+    "qa_engineer"
+  ],
+  "files_registry": {},
+  "persona_outputs": {
+    "requirement_analyst": {
+      "files_created": [],
+      "deliverables": {},
+      "duration": 312.648302,
+      "success": true,
+      "executed_at": "2025-10-04T12:40:10.738814"
+    },
+    "solution_architect": {
+      "files_created": [],
+      "deliverables": {},
+      "duration": 769.934815,
+      "success": true,
+      "executed_at": "2025-10-04T12:53:00.674539"
+    },
+    "security_specialist": {
+      "files_created": [],
+      "deliverables": {},
+      "duration": 688.499778,
+      "success": true,
+      "executed_at": "2025-10-04T13:04:29.175299"
+    },
+    "backend_developer": {
+      "files_created": [],
+      "deliverables": {},
+      "duration": 811.350481,
+      "success": true,
+      "executed_at": "2025-10-04T13:18:00.527094"
+    },
+    "ui_ux_designer": {
+      "files_created": [],
+      "deliverables": {},
+      "duration": 1139.886222,
+      "success": true,
+      "executed_at": "2025-10-04T13:37:00.414555"
+    },
+    "frontend_developer": {
+      "files_created": [],
+      "deliverables": {},
+      "duration": 869.463996,
+      "success": true,
+      "executed_at": "2025-10-04T13:51:29.879520"
+    },
+    "devops_engineer": {
+      "files_created": [],
+      "deliverables": {},
+      "duration": 680.545678,
+      "success": true,
+      "executed_at": "2025-10-04T14:02:50.426148"
+    },
+    "technical_writer": {
+      "files_created": [],
+      "deliverables": {},
+      "duration": 669.691254,
+      "success": true,
+      "executed_at": "2025-10-04T14:14:00.118483"
+    },
+    "database_administrator": {
+      "files_created": [],
+      "deliverables": {},
+      "duration": 973.883588,
+      "success": true,
+      "executed_at": "2025-10-04T14:30:14.003094"
+    },
+    "qa_engineer": {
+      "files_created": [],
+      "deliverables": {},
+      "duration": 1058.691729,
+      "success": true,
+      "executed_at": "2025-10-04T14:47:52.695851"
+    }
+  }
+}

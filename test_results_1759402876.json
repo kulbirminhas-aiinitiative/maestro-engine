@@ -1,0 +1,18 @@
+{
+  "timestamp": "2025-10-02T11:01:16.094050",
+  "summary": {
+    "total": 1,
+    "passed": 0,
+    "failed": 1,
+    "duration": 12.066351175308228
+  },
+  "results": [
+    {
+      "test": "basic_workflow",
+      "success": false,
+      "duration": 12.066351175308228,
+      "files_count": 0,
+      "project_path": ""
+    }
+  ]
+}

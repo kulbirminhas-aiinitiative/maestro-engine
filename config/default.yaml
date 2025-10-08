@@ -1,0 +1,128 @@
+# MAESTRO Engine - Default Configuration
+#
+# Part of ADR-005: Configuration Management
+#
+# Configuration hierarchy (highest to lowest priority):
+# 1. Environment variables
+# 2. config/{environment}.yaml
+# 3. config/default.yaml (this file)
+# 4. Code defaults
+#
+# All values can be overridden via environment variables using MAESTRO_ prefix
+# Example: MAESTRO_SERVICE_PORT=5001
+
+service:
+  name: maestro-engine
+  version: 1.0.0
+  port: ${PORT:5000}
+  host: ${HOST:0.0.0.0}
+  environment: ${ENVIRONMENT:development}
+
+# External service dependencies
+dependencies:
+  # Cache and session storage
+  redis:
+    url: ${REDIS_URL:redis://localhost:6379/0}
+    password: ${REDIS_PASSWORD:}
+    max_connections: ${REDIS_MAX_CONNECTIONS:10}
+    socket_timeout: 5
+    socket_connect_timeout: 2
+
+  # Database (optional for future use)
+  postgresql:
+    url: ${DATABASE_URL:postgresql://localhost:5432/maestro}
+    pool_size: ${DB_POOL_SIZE:10}
+    max_overflow: ${DB_MAX_OVERFLOW:20}
+
+  # Template service
+  template_service:
+    url: ${TEMPLATE_SERVICE_URL:http://localhost:9600}
+    timeout: 10
+    retry_attempts: 3
+
+  # Quality fabric
+  quality_fabric:
+    url: ${QUALITY_FABRIC_URL:http://localhost:8000}
+    timeout: 120  # Longer for testing operations
+    retry_attempts: 2
+
+# Orchestration configuration
+orchestration:
+  execution_mode: ${EXECUTION_MODE:parallel}  # sequential|parallel|utcp|hybrid
+  persona_selection: ${PERSONA_SELECTION:auto}  # auto|manual|ai-recommended
+  max_parallel_personas: ${MAX_PARALLEL_PERSONAS:4}
+  timeout_per_persona: ${PERSONA_TIMEOUT:300}  # seconds
+  enable_mcp: ${ENABLE_MCP:true}
+  enable_rag: ${ENABLE_RAG:true}
+  enable_quality_gates: ${ENABLE_QUALITY_GATES:true}
+
+# Resilience patterns (ADR-006)
+resilience:
+  # Circuit breakers
+  circuit_breakers:
+    template_service:
+      failure_threshold: 5
+      success_threshold: 2
+      timeout: 60
+
+    quality_fabric:
+      failure_threshold: 3
+      success_threshold: 2
+      timeout: 120
+
+  # Retry policies
+  retry_policies:
+    template_service:
+      max_retries: 3
+      initial_delay: 1.0
+      backoff_factor: 2.0
+      max_delay: 30.0
+
+    quality_fabric:
+      max_retries: 2
+      initial_delay: 2.0
+      backoff_factor: 2.0
+      max_delay: 60.0
+
+  # Timeouts (seconds)
+  timeouts:
+    template_fetch: 10
+    quality_validation: 120
+    persona_execution: 300
+    workflow_total: 900  # 15 minutes
+
+  # Bulkheads (max concurrent)
+  bulkheads:
+    template_service: 10
+    quality_fabric: 3
+    persona_execution: 4
+
+# Logging configuration
+logging:
+  level: ${LOG_LEVEL:INFO}
+  format: json  # json|text
+  output: stdout  # stdout|file
+  file_path: ${LOG_FILE:logs/maestro-engine.log}
+  enable_colors: ${LOG_COLORS:true}
+
+# Security
+security:
+  jwt_secret: ${JWT_SECRET:change-me-in-production}
+  jwt_algorithm: HS256
+  jwt_expiration: 3600  # seconds
+  api_key_header: X-API-Key
+  cors_origins: ${CORS_ORIGINS:http://localhost:4200,http://localhost:3000}
+
+# Monitoring
+monitoring:
+  enable_prometheus: ${ENABLE_PROMETHEUS:true}
+  prometheus_port: ${PROMETHEUS_PORT:9090}
+  enable_tracing: ${ENABLE_TRACING:false}
+  tracing_endpoint: ${TRACING_ENDPOINT:}
+
+# Feature flags
+features:
+  enable_accelerator_mode: ${ENABLE_ACCELERATOR:true}
+  enable_guardian_mode: ${ENABLE_GUARDIAN:true}
+  enable_template_extraction: ${ENABLE_TEMPLATE_EXTRACTION:true}
+  enable_audit_logging: ${ENABLE_AUDIT:true}

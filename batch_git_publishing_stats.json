@@ -1,0 +1,386 @@
+{
+  "total_projects": 75,
+  "processed": 75,
+  "successful": 0,
+  "failed": 0,
+  "templates_registered": 0,
+  "git_only": 75,
+  "error_count": 75,
+  "errors": [
+    {
+      "project": "ultimate_20250930_154519",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-154519.git"
+    },
+    {
+      "project": "ultimate_20250930_044355",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-044355.git"
+    },
+    {
+      "project": "ultimate_20250930_034407",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-034407.git"
+    },
+    {
+      "project": "ultimate_20250930_023250",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-023250.git"
+    },
+    {
+      "project": "ultimate_20251001_054010",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20251001-054010.git"
+    },
+    {
+      "project": "ultimate_20250930_121151",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-121151.git"
+    },
+    {
+      "project": "ultimate_20250930_105255",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-105255.git"
+    },
+    {
+      "project": "ultimate_20250930_095024",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-095024.git"
+    },
+    {
+      "project": "ultimate_20250930_081201",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-081201.git"
+    },
+    {
+      "project": "ultimate_20250930_065844",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-065844.git"
+    },
+    {
+      "project": "ultimate_20251001_043633",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20251001-043633.git"
+    },
+    {
+      "project": "ultimate_20250930_211703",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-211703.git"
+    },
+    {
+      "project": "ultimate_20250930_171458",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-171458.git"
+    },
+    {
+      "project": "ultimate_20250930_215255",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-215255.git"
+    },
+    {
+      "project": "ultimate_20250930_203733",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-203733.git"
+    },
+    {
+      "project": "ultimate_20250930_071307",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-071307.git"
+    },
+    {
+      "project": "ultimate_20250930_042943",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-042943.git"
+    },
+    {
+      "project": "ultimate_20250930_122102",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-122102.git"
+    },
+    {
+      "project": "ultimate_20250930_022228",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-022228.git"
+    },
+    {
+      "project": "ultimate_20250930_205142",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-205142.git"
+    },
+    {
+      "project": "ultimate_20250930_235842",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-235842.git"
+    },
+    {
+      "project": "ultimate_20250930_164403",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-164403.git"
+    },
+    {
+      "project": "ultimate_20250930_074224",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-074224.git"
+    },
+    {
+      "project": "ultimate_20250930_084201",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-084201.git"
+    },
+    {
+      "project": "ultimate_20250930_011828",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-011828.git"
+    },
+    {
+      "project": "ultimate_20250930_020910",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-020910.git"
+    },
+    {
+      "project": "ultimate_20250930_072307",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-072307.git"
+    },
+    {
+      "project": "ultimate_20250930_235427",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-235427.git"
+    },
+    {
+      "project": "ultimate_20250930_212953",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-212953.git"
+    },
+    {
+      "project": "ultimate_20250930_210915",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-210915.git"
+    },
+    {
+      "project": "ultimate_20250930_184826",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-184826.git"
+    },
+    {
+      "project": "ultimate_20250930_135517",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-135517.git"
+    },
+    {
+      "project": "ultimate_20250930_031519",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-031519.git"
+    },
+    {
+      "project": "ultimate_20250930_005040",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-005040.git"
+    },
+    {
+      "project": "utcp_20251001_095047",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-utcp-20251001-095047.git"
+    },
+    {
+      "project": "ultimate_20250930_051414",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-051414.git"
+    },
+    {
+      "project": "ultimate_20251001_073652",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20251001-073652.git"
+    },
+    {
+      "project": "ultimate_20251001_055352",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20251001-055352.git"
+    },
+    {
+      "project": "ultimate_20250930_162943",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-162943.git"
+    },
+    {
+      "project": "ultimate_20250930_053119",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-053119.git"
+    },
+    {
+      "project": "ultimate_20250930_210319",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-210319.git"
+    },
+    {
+      "project": "ultimate_20250930_045805",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-045805.git"
+    },
+    {
+      "project": "ultimate_20250930_101521",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-101521.git"
+    },
+    {
+      "project": "ultimate_20251001_044509",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20251001-044509.git"
+    },
+    {
+      "project": "ultimate_20250930_185822",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-185822.git"
+    },
+    {
+      "project": "ultimate_20250930_145722",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-145722.git"
+    },
+    {
+      "project": "ultimate_20250930_085825",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-085825.git"
+    },
+    {
+      "project": "ultimate_20250930_065446",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-065446.git"
+    },
+    {
+      "project": "ultimate_20250930_161549",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-161549.git"
+    },
+    {
+      "project": "ultimate_20250930_142300",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-142300.git"
+    },
+    {
+      "project": "ultimate_20250930_071852",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-071852.git"
+    },
+    {
+      "project": "ultimate_20251001_071050",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20251001-071050.git"
+    },
+    {
+      "project": "ultimate_20251001_063615",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20251001-063615.git"
+    },
+    {
+      "project": "ultimate_20250930_070736",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-070736.git"
+    },
+    {
+      "project": "ultimate_20250930_041554",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-041554.git"
+    },
+    {
+      "project": "ultimate_20250930_114320",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-114320.git"
+    },
+    {
+      "project": "ultimate_20250930_111751",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-111751.git"
+    },
+    {
+      "project": "ultimate_20250930_111221",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-111221.git"
+    },
+    {
+      "project": "ultimate_20250930_103048",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-103048.git"
+    },
+    {
+      "project": "ultimate_20250930_095456",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-095456.git"
+    },
+    {
+      "project": "ultimate_20250930_094032",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-094032.git"
+    },
+    {
+      "project": "ultimate_20250930_093002",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-093002.git"
+    },
+    {
+      "project": "ultimate_20250930_085209",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-085209.git"
+    },
+    {
+      "project": "ultimate_20250930_082914",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-082914.git"
+    },
+    {
+      "project": "ultimate_20250930_064140",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-064140.git"
+    },
+    {
+      "project": "ultimate_20250930_060723",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-060723.git"
+    },
+    {
+      "project": "ultimate_20250930_055038",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-055038.git"
+    },
+    {
+      "project": "ultimate_20250930_052210",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-052210.git"
+    },
+    {
+      "project": "ultimate_20250930_040204",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-040204.git"
+    },
+    {
+      "project": "ultimate_20250930_030614",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-030614.git"
+    },
+    {
+      "project": "ultimate_20250930_024146",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-024146.git"
+    },
+    {
+      "project": "ultimate_20250930_021358",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-021358.git"
+    },
+    {
+      "project": "ultimate_20250930_020432",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-020432.git"
+    },
+    {
+      "project": "ultimate_20250930_014703",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-014703.git"
+    },
+    {
+      "project": "ultimate_20250930_013156",
+      "error": null,
+      "git_url": "https://github.com/kulbirminhas-aiinitiative/maestro-template-ultimate-20250930-013156.git"
+    }
+  ]
+}
