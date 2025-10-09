@@ -7,8 +7,8 @@ services:
   # API Gateway - Single entry point (ADR-003)
   gateway:
     build:
-      context: .
-      dockerfile: Dockerfile.gateway
+      context: ../
+      dockerfile: maestro-engine-new/Dockerfile.gateway
     container_name: maestro-gateway
     ports:
       - "8080:8080"
@@ -29,6 +29,7 @@ services:
       - ./src:/app/src:ro
       - ./config:/app/config:ro
       - ./logs:/app/logs
+      - /home/ec2-user/projects/deployment:/home/ec2-user/projects/deployment:ro
     networks:
       - maestro-network
     extra_hosts:
@@ -44,8 +45,8 @@ services:
   # Service Coordinator - API Gateway
   coordinator:
     build:
-      context: .
-      dockerfile: Dockerfile.coordinator
+      context: ../
+      dockerfile: maestro-engine-new/Dockerfile.coordinator
     container_name: maestro-coordinator
     ports:
       - "8002:8002"
@@ -65,7 +66,7 @@ services:
       - ./src:/app/src:ro
       - ./config:/app/config:ro
       - ./logs:/app/logs
-      - /home/ec2-user/projects/shared/packages:/shared/packages:ro
+      - ../maestro-shared/packages:/shared/packages:ro
     networks:
       - maestro-network
     restart: unless-stopped
@@ -79,8 +80,8 @@ services:
   # MCP Service - Hot Claude sessions & caching
   mcp:
     build:
-      context: .
-      dockerfile: Dockerfile.mcp
+      context: ../
+      dockerfile: maestro-engine-new/Dockerfile.mcp
     container_name: maestro-mcp
     ports:
       - "9800:9800"
@@ -111,8 +112,8 @@ services:
   # Orchestration Gateway - Workflow coordination
   orchestration:
     build:
-      context: .
-      dockerfile: Dockerfile.orchestration
+      context: ../
+      dockerfile: maestro-engine-new/Dockerfile.orchestration
     container_name: maestro-orchestration
     ports:
       - "8004:8004"
@@ -143,8 +144,8 @@ services:
   # RAG Service - Vector search & embeddings
   rag:
     build:
-      context: .
-      dockerfile: Dockerfile.rag
+      context: ../
+      dockerfile: maestro-engine-new/Dockerfile.rag
     container_name: maestro-rag
     ports:
       - "9803:9803"
@@ -171,6 +172,136 @@ services:
       retries: 3
       start_period: 10s
 
+  # BFF Service - Backend for Frontend
+  bff:
+    build:
+      context: ../
+      dockerfile: maestro-engine-new/Dockerfile.bff
+    container_name: maestro-bff
+    ports:
+      - "4001:4001"
+    environment:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=DEBUG
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - REDIS_URL=redis://redis:6379
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      # Service URLs
+      - MAESTRO_ENGINE_URL=http://coordinator:8002
+      - ORCHESTRATION_URL=http://orchestration:8004
+      - MCP_URL=http://mcp:9800
+      - RAG_URL=http://rag:9803
+      - GATEWAY_URL=http://gateway:8080
+      - QUALITY_FABRIC_URL=http://quality-fabric:8000
+      - SERVICE_NAME=maestro-bff
+    volumes:
+      - ./src:/app/src:ro
+      - ./config:/app/config:ro
+      - ./logs:/app/logs
+      - ../maestro-shared/packages:/shared/packages:ro
+      - ~/.claude:/home/maestro/.claude
+      - /home/ec2-user/projects/deployment:/home/ec2-user/projects/deployment:ro
+    networks:
+      - maestro-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      - coordinator
+      - orchestration
+      - mcp
+      - rag
+      - redis
+
+  # Collaboration BFF - Multi-Agent Collaboration
+  collaboration-bff:
+    build:
+      context: ../
+      dockerfile: maestro-engine-new/Dockerfile.collaboration
+    container_name: maestro-collaboration-bff
+    ports:
+      - "4002:4002"
+    environment:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=INFO
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    volumes:
+      - ./src:/app/src:ro
+      - ./config:/app/config:ro
+      - ./logs:/app/logs
+      - ../maestro-platform/claude_code_api_layer:/home/ec2-user/projects/maestro-platform/claude_code_api_layer:ro
+      - ~/.claude:/home/maestro/.claude
+    networks:
+      - maestro-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4002/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # Quality Fabric - Universal TAAS Platform
+  quality-fabric:
+    build:
+      context: ../quality-fabric-new
+      dockerfile: Dockerfile
+    container_name: maestro-quality-fabric
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - PLATFORM_ENV=development
+      - DATABASE_PATH=/app/data/quality_fabric.db
+      - RESULTS_DIR=/app/results
+      - LOG_LEVEL=info
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      # API Gateway integration (ADR-003)
+      - GATEWAY_URL=http://gateway:8080
+      - SERVICE_NAME=quality-fabric
+    volumes:
+      - ../quality-fabric-new/src:/app/src:ro
+      - ../quality-fabric-new/data:/app/data
+      - ../quality-fabric-new/results:/app/results
+      - ../quality-fabric-new/logs:/app/logs
+      - ../quality-fabric-new/temp:/app/temp
+    networks:
+      - maestro-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Redis - Shared cache and state management
+  redis:
+    image: redis:7-alpine
+    container_name: maestro-redis
+    ports:
+      - "6380:6379"
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - maestro-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
 networks:
   maestro-network:
     external: true
@@ -181,3 +312,5 @@ volumes:
     name: maestro-mcp-cache-dev
   chroma-data:
     name: maestro-chroma-data-dev
+  redis-data:
+    name: maestro-redis-data-dev

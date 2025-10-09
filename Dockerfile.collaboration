@@ -1,0 +1,72 @@
+# Dockerfile for Multi-Agent Collaboration BFF Service
+# Port: 4002
+# Features: WebSocket support, AI Agent personas, @Maestro synthesis
+
+FROM python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    POETRY_VERSION=1.8.0 \
+    POETRY_HOME="/opt/poetry" \
+    POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_IN_PROJECT=true
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    build-essential \
+    ca-certificates \
+    gnupg \
+    && mkdir -p /etc/apt/keyrings \
+    && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list \
+    && apt-get update \
+    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -sSL https://install.python-poetry.org | python3 -
+
+ENV PATH="/opt/poetry/bin:$PATH"
+
+# Install Claude Code CLI globally (for AI agent responses)
+RUN npm install -g @anthropic-ai/claude-code || echo "Claude Code CLI installation skipped"
+
+# Install claude-agent-sdk (for enhanced AI features)
+RUN pip install claude-agent-sdk>=0.1.1 || echo "claude-agent-sdk installation skipped"
+
+WORKDIR /app
+
+# Create directory structure for shared packages
+RUN mkdir -p /maestro-shared/packages
+
+# Copy shared packages from parent context
+COPY maestro-shared/packages /maestro-shared/packages
+
+# Copy dependency files
+COPY maestro-engine-new/pyproject.toml maestro-engine-new/poetry.lock* ./
+
+# Install dependencies
+RUN poetry install --no-root --only main
+
+# Copy source code
+COPY maestro-engine-new/src/ ./src/
+COPY maestro-engine-new/config/ ./config/
+
+# Add shared libraries and src to Python path
+ENV PYTHONPATH="/app/src:/maestro-shared/packages/core-api/src:/maestro-shared/packages/core-logging/src:/maestro-shared/packages/core-config/src:/maestro-shared/packages/core-auth/src:/maestro-shared/packages/core-db/src:/maestro-shared/packages/core-messaging/src:/maestro-shared/packages/monitoring/src:${PYTHONPATH}"
+
+# Create non-root user
+RUN useradd -m -u 1000 maestro && \
+    chown -R maestro:maestro /app && \
+    mkdir -p /tmp/maestro_collaboration && \
+    chown -R maestro:maestro /tmp/maestro_collaboration
+
+USER maestro
+
+EXPOSE 4002
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:4002/health || exit 1
+
+# Run collaboration BFF service
+CMD ["poetry", "run", "python", "-m", "bff.collaboration_service"]
