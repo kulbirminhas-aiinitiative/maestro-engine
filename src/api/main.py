@@ -143,7 +143,7 @@ async def health_check():
         "utcp_workflow": False,
         "httpx": False,
         "chromadb": False,
-        "claude_code_sdk": False,
+        "claude_agent_sdk": False,
     }
 
     try:
@@ -168,14 +168,14 @@ async def health_check():
         pass
 
     try:
-        from claude_code_sdk import query
+        from claude_agent_sdk import query
 
-        dependencies["claude_code_sdk"] = True
+        dependencies["claude_agent_sdk"] = True
     except ImportError:
         pass
 
     # Determine overall status
-    critical_deps = ["utcp_workflow", "claude_code_sdk"]
+    critical_deps = ["utcp_workflow", "claude_agent_sdk"]
     status = "healthy" if all(dependencies[dep] for dep in critical_deps) else "degraded"
 
     return HealthResponse(
@@ -186,7 +186,7 @@ async def health_check():
             "utcp_distributed_execution": dependencies["httpx"],
             "rag_template_retrieval": dependencies["chromadb"],
             "workflow_execution": dependencies["utcp_workflow"],
-            "claude_sdk": dependencies["claude_code_sdk"],
+            "claude_sdk": dependencies["claude_agent_sdk"],
         },
         dependencies=dependencies,
     )

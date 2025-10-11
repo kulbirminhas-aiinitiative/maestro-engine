@@ -69,14 +69,14 @@ OUTPUT_CONFIG = {
     "verbose": True,
 }
 
-# Claude Code SDK
+# Claude Agent SDK
 try:
-    from claude_code_sdk import ClaudeCodeOptions, query
+    from claude_agent_sdk import ClaudeAgentOptions, query
 
     CLAUDE_SDK_AVAILABLE = True
 except ImportError as e:
     CLAUDE_SDK_AVAILABLE = False
-    logging.error(f"❌ claude_code_sdk not available: {e}")
+    logging.error(f"❌ claude_agent_sdk not available: {e}")
 
 logger = logging.getLogger(__name__)
 
@@ -124,7 +124,7 @@ class AutonomousSDLCEngineV3Resumable:
         enable_rag: bool = None,
     ):
         if not CLAUDE_SDK_AVAILABLE:
-            logger.warning("⚠️ claude_code_sdk not available - using fallback execution mode")
+            logger.warning("⚠️ claude_agent_sdk not available - using fallback execution mode")
 
         self.selected_personas = selected_personas
         self.output_dir = Path(output_dir or OUTPUT_CONFIG["default_output_dir"])
@@ -336,7 +336,7 @@ class AutonomousSDLCEngineV3Resumable:
                 persona_config, requirement, expected_deliverables, session_context, rag_guidance
             )
 
-            options = ClaudeCodeOptions(
+            options = ClaudeAgentOptions(
                 system_prompt=persona_config["system_prompt"],
                 model=CLAUDE_CONFIG["model"],
                 cwd=str(self.output_dir),
@@ -346,7 +346,7 @@ class AutonomousSDLCEngineV3Resumable:
             logger.info(f"🤖 {persona_id} is working...")
             logger.info(f"📦 Expected deliverables: {', '.join(expected_deliverables[:5])}")
 
-            # Execute with Claude Code SDK
+            # Execute with Claude Agent SDK
             async for message in query(prompt=prompt, options=options):
                 if hasattr(message, "message_type") and message.message_type == "tool_use":
                     if hasattr(message, "name") and message.name == "Write":

@@ -14,8 +14,8 @@ from typing import Any, Dict, List, Optional
 
 import uvicorn
 
-# Import Claude Code SDK
-from claude_code_sdk import ClaudeCodeOptions, query
+# Import Claude Agent SDK (v3.0 - Security Update)
+from claude_agent_sdk import ClaudeAgentOptions, query
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -79,7 +79,7 @@ async def health_check():
         "service": "maestro-workflow-bff",
         "timestamp": datetime.now().isoformat(),
         "components": {
-            "claude_code_sdk": True,
+            "claude_agent_sdk": True,
             "redis": False,
             "websocket_connections": len(ws_connections),
         },
@@ -162,8 +162,8 @@ async def execute_generation(session_id: str, requirement: str) -> Dict[str, Any
     work_dir.mkdir(parents=True, exist_ok=True)
 
     try:
-        # Configure Claude Code options
-        options = ClaudeCodeOptions(
+        # Configure Claude Agent SDK options (v3.0)
+        options = ClaudeAgentOptions(
             cwd=str(work_dir),
             permission_mode="bypassPermissions",
             system_prompt=f"""You are an expert Frontend Engineer in Accelerator mode.

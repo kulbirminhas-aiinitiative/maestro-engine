@@ -27,7 +27,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
         self.config = config
         self.jwt_secret = config.get("jwt_secret", "change-me-in-production")
         self.permissive_mode = config.get("permissive_mode", True)
-        self.protected_paths = config.get("protected_paths", [])
+        # Handle None case when protected_paths is commented out in YAML
+        self.protected_paths = config.get("protected_paths") or []
 
     def _is_protected_path(self, path: str) -> bool:
         """Check if path requires authentication"""

@@ -16,8 +16,8 @@ from typing import Any, Dict, List, Optional
 
 import uvicorn
 
-# Import Claude Code SDK
-from claude_code_sdk import ClaudeCodeOptions, query
+# Import Claude Agent SDK (v3.0 - Security Update)
+from claude_agent_sdk import ClaudeAgentOptions, query
 from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -161,7 +161,7 @@ async def startup_event():
     logger.info(f"🔌 WebSocket: ws://localhost:4001/ws/{{session_id}}")
     logger.info("=" * 60)
     logger.info("✅ Features:")
-    logger.info(f"  - Claude Code SDK: enabled")
+    logger.info(f"  - Claude Agent SDK (v3.0): enabled")
     logger.info(f"  - Redis State: connected")
     logger.info(f"  - WebSocket: ready")
     logger.info(f"  - Prometheus: {'enabled' if HAS_PROMETHEUS else 'disabled'}")
@@ -184,7 +184,7 @@ async def health_check():
         "service": "maestro-unified-bff",
         "timestamp": datetime.now().isoformat(),
         "components": {
-            "claude_code_sdk": True,
+            "claude_agent_sdk": True,
             "redis": await redis_state.session_exists("health_check"),
             "websocket_connections": ws_manager.get_connection_count(),
         },
@@ -312,8 +312,8 @@ async def execute_generation(session_id: str, requirement: str) -> Dict[str, Any
     work_dir.mkdir(parents=True, exist_ok=True)
 
     try:
-        # Configure Claude Code options for Frontend Engineer persona
-        options = ClaudeCodeOptions(
+        # Configure Claude Agent SDK options (v3.0) for Frontend Engineer persona
+        options = ClaudeAgentOptions(
             cwd=str(work_dir),
             permission_mode="bypassPermissions",
             system_prompt=f"""You are an expert Frontend Engineer in Accelerator mode - a rapid prototyping AI assistant.

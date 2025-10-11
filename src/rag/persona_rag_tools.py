@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 try:
-    from claude_code_sdk import tool
+    from claude_agent_sdk import tool
 
     from rag.persona_domains import (
         get_persona_domain,

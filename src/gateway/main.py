@@ -133,6 +133,8 @@ class GatewayConfig:
 
 # Gateway configuration
 config = GatewayConfig()
+# Load config immediately (before creating FastAPI app)
+config.load()
 
 
 @asynccontextmanager
@@ -140,7 +142,6 @@ async def lifespan(app: FastAPI):
     """Application lifespan manager"""
     # Startup
     logger.info("Starting MAESTRO API Gateway...")
-    config.load()
 
     # Initialize route manager
     route_manager = RouteManager(config.routes)

@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 try:
-    from claude_code_sdk import tool
+    from claude_agent_sdk import tool
 
     from rag_system.collateral_extractor import CollateralExtractor
     from rag_system.pattern_recommender import PatternRecommender

@@ -25,14 +25,14 @@ from src.personas import (
     get_adapter,
 )
 
-# Import Claude Code SDK for persona execution
+# Import Claude Agent SDK for persona execution
 try:
-    from claude_code_sdk import ClaudeCodeOptions, query
+    from claude_agent_sdk import ClaudeAgentOptions, query
 
     CLAUDE_SDK_AVAILABLE = True
 except ImportError:
     CLAUDE_SDK_AVAILABLE = False
-    logging.warning("Claude Code SDK not available - using mock execution")
+    logging.warning("Claude Agent SDK not available - using mock execution")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -320,10 +320,10 @@ Use the Write tool to create actual files with proper paths relative to the work
             )
 
     async def _execute_with_claude_sdk(self, persona_id: str, prompt: str) -> Dict[str, Any]:
-        """Execute persona using Claude Code SDK"""
+        """Execute persona using Claude Agent SDK"""
 
         try:
-            options = ClaudeCodeOptions(
+            options = ClaudeAgentOptions(
                 cwd=str(self.work_dir),
                 permission_mode="bypassPermissions",
                 system_prompt=prompt,

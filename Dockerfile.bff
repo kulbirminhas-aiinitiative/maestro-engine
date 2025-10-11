@@ -1,9 +1,9 @@
-# Dockerfile for MAESTRO Engine Coordinator (API Gateway)
-# Port: 8002
+# Dockerfile for MAESTRO BFF Service
+# Port: 4001
+# Features: WebSocket support, Redis state, Claude Code SDK integration
 
 FROM python:3.11-slim
 
-# Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
@@ -12,16 +12,24 @@ ENV PYTHONUNBUFFERED=1 \
     POETRY_NO_INTERACTION=1 \
     POETRY_VIRTUALENVS_IN_PROJECT=true
 
-# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     build-essential \
+    ca-certificates \
+    gnupg \
+    && mkdir -p /etc/apt/keyrings \
+    && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list \
+    && apt-get update \
+    && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Poetry
 RUN curl -sSL https://install.python-poetry.org | python3 -
 
 ENV PATH="/opt/poetry/bin:$PATH"
+
+# Install Claude Code CLI globally
+RUN npm install -g @anthropic-ai/claude-code
 
 WORKDIR /app
 
@@ -37,14 +45,9 @@ COPY maestro-engine-new/pyproject.toml maestro-engine-new/poetry.lock* ./
 # Install dependencies
 RUN poetry install --no-root --only main
 
-# Copy shared libraries from host
-COPY --from=busybox:latest /bin/sh /bin/sh
-RUN mkdir -p /shared/packages
-
-# Copy application code
+# Copy source code
 COPY maestro-engine-new/src/ ./src/
 COPY maestro-engine-new/config/ ./config/
-COPY maestro-engine-new/run_engine.py ./
 
 # Add shared libraries and src to Python path
 ENV PYTHONPATH="/app/src:/maestro-shared/packages/core-api/src:/maestro-shared/packages/core-logging/src:/maestro-shared/packages/core-config/src:/maestro-shared/packages/core-auth/src:/maestro-shared/packages/core-db/src:/maestro-shared/packages/core-messaging/src:/maestro-shared/packages/monitoring/src:${PYTHONPATH}"
@@ -55,12 +58,10 @@ RUN useradd -m -u 1000 maestro && \
 
 USER maestro
 
-# Expose port
-EXPOSE 8002
+EXPOSE 4001
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:8002/health || exit 1
+    CMD curl -f http://localhost:4001/health || exit 1
 
-# Run coordinator
-CMD ["poetry", "run", "python", "run_engine.py"]
+# Run BFF service
+CMD ["poetry", "run", "python", "-m", "bff.main"]

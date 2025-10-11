@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 try:
-    from claude_code_sdk import ClaudeCodeOptions, query
+    from claude_agent_sdk import ClaudeAgentOptions, query
     from rag_tools import RAG_TOOLS, get_rag_tools_description
     from unified_claude_tools import (
         create_code_file,
@@ -367,7 +367,7 @@ I need you to help with the following requirement:
             response_text = ""
             async for message in query(
                 prompt=followup_prompt,
-                options=ClaudeCodeOptions(
+                options=ClaudeAgentOptions(
                     cwd=str(self.project_path),
                     system_prompt=self.system_prompt,
                     continue_conversation=True,

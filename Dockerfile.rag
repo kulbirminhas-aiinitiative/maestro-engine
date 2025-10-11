@@ -23,15 +23,22 @@ ENV PATH="/opt/poetry/bin:$PATH"
 
 WORKDIR /app
 
-COPY pyproject.toml poetry.lock* ./
+# Create directory structure for shared packages
+RUN mkdir -p /maestro-shared/packages
+
+# Copy shared packages from parent context
+COPY maestro-shared/packages /maestro-shared/packages
+
+# Copy dependency files
+COPY maestro-engine-new/pyproject.toml maestro-engine-new/poetry.lock* ./
 
 # Install with chromadb for vector storage
 RUN poetry install --no-root --only main --extras chromadb || \
     poetry install --no-root --only main
 
 # Copy source code
-COPY src/ ./src/
-COPY config/ ./config/
+COPY maestro-engine-new/src/ ./src/
+COPY maestro-engine-new/config/ ./config/
 
 # Create ChromaDB persist directory
 RUN mkdir -p /app/chroma_db

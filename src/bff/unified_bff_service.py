@@ -24,8 +24,8 @@ from pydantic import BaseModel, Field
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# Import Claude Code SDK
-from claude_code_sdk import ClaudeCodeOptions, query
+# Import Claude Agent SDK (v3.0 - Security Update)
+from claude_agent_sdk import ClaudeAgentOptions, query
 
 # Import Shared Libraries
 from maestro_core_logging import configure_logging, get_logger
@@ -127,7 +127,7 @@ async def lifespan(app: FastAPI):
     )
     logger.info(
         "service_features",
-        claude_code_sdk="enabled",
+        claude_agent_sdk="enabled",
         redis_state="connected",
         websocket="ready",
         architecture="Unified BFF (Single connection for Chat + Preview)",
@@ -169,7 +169,7 @@ async def health_check():
         "environment": settings.environment,
         "timestamp": datetime.now().isoformat(),
         "components": {
-            "claude_code_sdk": True,
+            "claude_agent_sdk": True,
             "redis": await redis_state.session_exists("health_check"),  # Redis connectivity
             "websocket_connections": ws_manager.get_connection_count(),
         },
@@ -397,7 +397,7 @@ Your role:
 You're having a conversation while building - be helpful, curious, and engaging!"""
 
         # Call Claude for real conversation
-        options = ClaudeCodeOptions(
+        options = ClaudeAgentOptions(
             cwd="/tmp",
             permission_mode="bypassPermissions",
             system_prompt=system_prompt,
@@ -673,8 +673,8 @@ If the user references a website or domain (e.g., "google.com", "fifth-9.com", "
    - If a new idea: "Prototype ready. Your [Project Type] is located at './index.html'."
 """
 
-        # Configure Claude Code options
-        options = ClaudeCodeOptions(
+        # Configure Claude Agent SDK options (v3.0)
+        options = ClaudeAgentOptions(
             cwd=str(work_dir),
             permission_mode="bypassPermissions",
             system_prompt=system_prompt,
