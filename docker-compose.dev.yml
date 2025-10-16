@@ -231,12 +231,13 @@ services:
     environment:
       - ENVIRONMENT=development
       - LOG_LEVEL=INFO
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      # execution-platform will read API keys from its mounted .env file
     volumes:
       - ./src:/app/src:ro
       - ./config:/app/config:ro
       - ./logs:/app/logs
       - ../maestro-platform/claude_code_api_layer:/home/ec2-user/projects/maestro-platform/claude_code_api_layer:ro
+      - ../maestro-platform/execution-platform:/home/ec2-user/projects/maestro-platform/execution-platform:ro
       - ~/.claude:/home/maestro/.claude
     networks:
       - maestro-network

@@ -31,8 +31,8 @@ ENV PATH="/opt/poetry/bin:$PATH"
 # Install Claude Code CLI globally (for AI agent responses)
 RUN npm install -g @anthropic-ai/claude-code || echo "Claude Code CLI installation skipped"
 
-# Install claude-agent-sdk (for enhanced AI features)
-RUN pip install claude-agent-sdk>=0.1.1 || echo "claude-agent-sdk installation skipped"
+# Install AI provider SDKs (for execution-platform multi-provider support)
+RUN pip install claude-agent-sdk>=0.1.1 openai>=1.0.0 anthropic>=0.18.0 google-generativeai>=0.3.0 || echo "AI SDK installation skipped"
 
 WORKDIR /app
 

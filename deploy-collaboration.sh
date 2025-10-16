@@ -19,10 +19,10 @@ fi
 
 # Build and start only the collaboration service
 echo "🐳 Building collaboration BFF service..."
-docker-compose -f docker-compose.dev.yml build collaboration-bff
+docker-compose -f docker-compose.dev.yml --env-file .env build collaboration-bff
 
 echo "🚀 Starting collaboration BFF service..."
-docker-compose -f docker-compose.dev.yml up -d collaboration-bff
+docker-compose -f docker-compose.dev.yml --env-file .env up -d collaboration-bff
 
 # Wait for service to be healthy
 echo ""

@@ -38,14 +38,27 @@ except ImportError:
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
-# Import Claude Agent SDK directly (same as main BFF service)
+# Import execution-platform for multi-provider AI support
 try:
-    from claude_agent_sdk import ClaudeAgentOptions, query
-    HAS_CLAUDE_SDK = True
-    logger.info("✅ Claude Agent SDK loaded successfully")
-except ImportError:
-    HAS_CLAUDE_SDK = False
-    logger.warning("Claude Agent SDK not available - AI responses will be simulated")
+    import sys
+    from pathlib import Path
+    # Add execution-platform to path
+    execution_platform_path = Path("/home/ec2-user/projects/maestro-platform/execution-platform")
+    if execution_platform_path.exists():
+        sys.path.insert(0, str(execution_platform_path))
+
+    from execution_platform.maestro_sdk.router import get_adapter
+    from execution_platform.maestro_sdk.types import ChatRequest, Message, ChatChunk
+    from execution_platform.config import settings
+
+    # Initialize AI provider (auto-detect: OpenAI → Anthropic → Gemini → ClaudeAgent)
+    ai_provider = get_adapter("auto")
+    HAS_AI_PROVIDER = True
+    logger.info(f"✅ Execution Platform loaded successfully with provider: {settings.provider}")
+except ImportError as e:
+    HAS_AI_PROVIDER = False
+    ai_provider = None
+    logger.warning(f"Execution Platform not available - AI responses will be simulated: {e}")
 
 # ============================================================================
 # AI Agent Personas (Loaded from real backend persona definitions)
@@ -161,12 +174,9 @@ class CollaborationRoomManager:
 # Global room manager
 room_manager = CollaborationRoomManager()
 
-# Global SDK lock to serialize claude_agent_sdk access (prevents concurrent execution issues)
-sdk_lock = asyncio.Lock()
-
 
 # ============================================================================
-# AI Agent Response Generation
+# AI Agent Response Generation (Using Execution Platform)
 # ============================================================================
 
 async def generate_ai_response(
@@ -175,7 +185,7 @@ async def generate_ai_response(
     user_message: str,
     mentioned_in_message: bool = False
 ) -> str:
-    """Generate AI response for specific agent using claude-agent-sdk"""
+    """Generate AI response for specific agent using execution-platform multi-provider adapters"""
     agent = AI_AGENT_PERSONAS.get(agent_id)
     if not agent:
         return f"Unknown agent: {agent_id}"
@@ -183,68 +193,45 @@ async def generate_ai_response(
     # Simulate thinking time
     await asyncio.sleep(agent['response_time'])
 
-    if not HAS_CLAUDE_SDK:
-        # Simulated response if SDK not available
+    if not HAS_AI_PROVIDER or ai_provider is None:
+        # Simulated response if AI provider not available
         return generate_simulated_response(agent, user_message, mentioned_in_message)
 
     try:
-        # Build conversation context (MINIMIZED: last 3 messages only to reduce prompt size)
-        context_messages = []
-        for msg in conversation[-3:]:
-            role = "user" if msg['sender']['type'] == 'human' else msg['sender']['name']
-            # Truncate long messages to max 200 chars
-            content = msg['content'][:200] + ('...' if len(msg['content']) > 200 else '')
-            context_messages.append(f"{role}: {content}")
+        # Build conversation context (EXPANDED: last 20 messages for better context)
+        messages = []
+        for msg in conversation[-20:]:
+            role = "user" if msg['sender']['type'] == 'human' else "assistant"
+            content = msg['content']  # NO truncation - full content!
+            messages.append(Message(role=role, content=content))
 
-        context = "\n".join(context_messages) if context_messages else ""
+        # Add current user message
+        messages.append(Message(role="user", content=user_message))
 
-        # MINIMIZED system prompt (instead of full persona)
-        minimal_system_prompt = f"You are {agent['name']}, a {agent['role']}. Be concise and helpful."
+        # Use full persona system prompt (NO minimization!)
+        system_prompt = agent.get('system_prompt') or f"You are {agent['name']}, a {agent['role']}. {agent.get('description', '')} Be concise and helpful."
 
-        # Create MINIMIZED prompt for Claude
-        prompt = f"""Context (last 3 messages):
-{context}
-
-Message: {user_message}
-{'(You were @mentioned)' if mentioned_in_message else ''}
-
-Respond briefly (1-2 sentences) as {agent['role']}."""
-
-        # Configure Claude Agent SDK options (matching working main BFF)
-        options = ClaudeAgentOptions(
-            cwd="/tmp",
-            permission_mode="bypassPermissions",
-            system_prompt=minimal_system_prompt,
-            continue_conversation=False,
-            allowed_tools=["write", "read", "bash", "glob", "grep", "webfetch"]
+        # Create ChatRequest for execution-platform
+        chat_request = ChatRequest(
+            messages=messages,
+            system=system_prompt,
+            max_tokens=2048,
+            temperature=0.7
         )
 
-        # Call Claude Agent SDK with serialization lock
+        # Call AI provider (NO LOCK - naturally handles concurrency!)
+        logger.info(f"🚀 Calling AI provider for {agent_id} (parallel execution enabled)")
         response_parts = []
-        async with sdk_lock:
-            logger.info(f"🔒 Acquired SDK lock for {agent_id}")
-            async for message in query(prompt=prompt, options=options):
-                # Check .content FIRST (AssistantMessage uses this)
-                if hasattr(message, 'content'):
-                    content = message.content
-                    if isinstance(content, str):
-                        response_parts.append(content)
-                    elif isinstance(content, list):
-                        for item in content:
-                            if hasattr(item, 'text'):
-                                response_parts.append(item.text)
-                elif hasattr(message, 'text') and message.text:
-                    response_parts.append(message.text)
-            logger.info(f"🔓 Released SDK lock for {agent_id}")
+        async for chunk in ai_provider.chat(chat_request):
+            if chunk.delta_text:
+                response_parts.append(chunk.delta_text)
 
-        response = "\n".join(response_parts).strip()
-        response_dict = {'success': bool(response), 'output': response}
+        response = "".join(response_parts).strip()
 
-        if response_dict.get('success'):
-            response = response_dict.get('output', '').strip()
-            return response if response else generate_simulated_response(agent, user_message, mentioned_in_message)
+        if response:
+            return response
         else:
-            logger.error(f"Error from Claude SDK for {agent_id}: {response_dict.get('error')}")
+            logger.warning(f"Empty response from AI provider for {agent_id}")
             return generate_simulated_response(agent, user_message, mentioned_in_message)
 
     except Exception as e:
@@ -294,13 +281,13 @@ async def generate_maestro_preview(
     """Generate preview using @Maestro synthesis with claude-agent-sdk"""
     agent = AI_AGENT_PERSONAS['maestro']
 
-    logger.info(f"🔍 HAS_CLAUDE_SDK = {HAS_CLAUDE_SDK}")
+    logger.info(f"🔍 HAS_AI_PROVIDER = {HAS_AI_PROVIDER}")
     logger.info(f"📊 Conversation has {len(conversation)} messages")
 
     # Simulate Maestro's longer processing time
     await asyncio.sleep(agent['response_time'])
 
-    if not HAS_CLAUDE_SDK:
+    if not HAS_AI_PROVIDER or ai_provider is None:
         # Return simulated preview
         return {
             'id': f'preview_{int(time.time())}',
@@ -311,91 +298,72 @@ async def generate_maestro_preview(
         }
 
     try:
-        # Build MINIMIZED context from last 5 messages only (not entire conversation)
-        context_messages = []
-        for msg in conversation[-5:]:
-            role = "user" if msg['sender']['type'] == 'human' else msg['sender']['name']
-            # Truncate to max 200 chars per message
-            content = msg['content'][:200] + ('...' if len(msg['content']) > 200 else '')
-            context_messages.append(f"{role}: {content}")
+        # Build conversation context (EXPANDED: last 15 messages for better synthesis)
+        messages = []
+        for msg in conversation[-15:]:
+            role = "user" if msg['sender']['type'] == 'human' else "assistant"
+            content = msg['content']  # NO truncation!
+            messages.append(Message(role=role, content=content))
 
-        context = "\n".join(context_messages)
+        # Full Maestro system prompt for code generation
+        system_prompt = agent.get('system_prompt') or """You are Maestro, an expert code synthesis AI.
+Generate complete, self-contained HTML files with inline CSS and JavaScript.
+Focus on creating polished, production-ready code based on the team's discussion."""
 
-        # MINIMIZED Maestro system prompt
-        minimal_system_prompt = "You are Maestro, a code synthesis AI. Create complete HTML files."
+        # Comprehensive Maestro prompt
+        prompt = """Based on the team discussion above, create a complete, self-contained HTML application.
 
-        # MINIMIZED Maestro prompt
-        prompt = f"""Team discussion (last 5 messages):
-{context}
+Requirements:
+- Single index.html file with inline CSS and JavaScript
+- Fully functional and interactive
+- Modern, polished design
+- Responsive layout
+- Clean, well-commented code
 
-Use Write tool to create './index.html' with complete self-contained HTML (inline CSS/JS).
-Be concise."""
+Generate the complete HTML code."""
 
-        # Create work directory for Maestro
-        work_dir = f"/tmp/maestro_collaboration/{room_id}"
-        import os
-        os.makedirs(work_dir, exist_ok=True)
+        messages.append(Message(role="user", content=prompt))
 
-        # Configure Claude Agent SDK options for Maestro (matching working main BFF)
-        options = ClaudeAgentOptions(
-            cwd=work_dir,
-            permission_mode="bypassPermissions",
-            system_prompt=minimal_system_prompt,
-            continue_conversation=False,
-            allowed_tools=["write", "read", "bash", "glob", "grep", "webfetch"]
+        # Create ChatRequest
+        chat_request = ChatRequest(
+            messages=messages,
+            system=system_prompt,
+            max_tokens=4096,  # More tokens for code generation
+            temperature=0.7
         )
 
-        # Call Claude Agent SDK with serialization lock
+        # Call AI provider (NO LOCK - handles concurrency naturally!)
+        logger.info(f"🚀 Calling AI provider for Maestro preview (parallel execution enabled)")
         response_parts = []
-        async with sdk_lock:
-            logger.info(f"🔒 Acquired SDK lock for Maestro preview")
-            async for message in query(prompt=prompt, options=options):
-                # Check .content FIRST (AssistantMessage uses this)
-                if hasattr(message, 'content'):
-                    content = message.content
-                    if isinstance(content, str):
-                        response_parts.append(content)
-                    elif isinstance(content, list):
-                        for item in content:
-                            if hasattr(item, 'text'):
-                                response_parts.append(item.text)
-                elif hasattr(message, 'text') and message.text:
-                    response_parts.append(message.text)
-            logger.info(f"🔓 Released SDK lock for Maestro preview")
+        async for chunk in ai_provider.chat(chat_request):
+            if chunk.delta_text:
+                response_parts.append(chunk.delta_text)
 
-        # Check if index.html was created by Write tool
-        import pathlib
-        index_file = pathlib.Path(work_dir) / "index.html"
+        full_response = "".join(response_parts).strip()
+
+        # Extract HTML from response
         html_content = None
+        if '```html' in full_response:
+            html_start = full_response.find('```html') + 7
+            html_end = full_response.find('```', html_start)
+            if html_end > html_start:
+                html_content = full_response[html_start:html_end].strip()
+        elif '<!DOCTYPE' in full_response or '<html' in full_response:
+            html_content = full_response
 
-        if index_file.exists():
-            with open(index_file, 'r', encoding='utf-8') as f:
-                html_content = f.read()
-            synthesis_notes = "Preview generated using Claude AI with Write tool"
+        if not html_content:
+            logger.warning(f"No HTML in response, using simulated preview")
+            html_content = generate_simulated_html_preview(conversation)
+            synthesis_notes = "Preview generated (HTML extraction failed)"
         else:
-            # Fallback: try to extract HTML from response text
-            full_response = "\n".join(response_parts).strip()
-            if '```html' in full_response:
-                html_start = full_response.find('```html') + 7
-                html_end = full_response.find('```', html_start)
-                if html_end > html_start:
-                    html_content = full_response[html_start:html_end].strip()
-            elif '<!DOCTYPE' in full_response or '<html' in full_response:
-                html_content = full_response
-
-            if not html_content:
-                # No HTML found, use simulated preview
-                logger.warning(f"No HTML file created and no HTML in response, using simulated preview")
-                html_content = generate_simulated_html_preview(conversation)
-
-            synthesis_notes = "Preview generated from team discussion"
+            synthesis_notes = "Preview generated using AI code synthesis"
 
         return {
             'id': f'preview_{int(time.time())}',
             'type': 'web',
             'html_content': html_content,
             'generated_by': 'maestro',
-            'synthesis_notes': synthesis_notes[:200]  # Truncate for display
+            'synthesis_notes': synthesis_notes[:200]
         }
 
     except Exception as e:
@@ -527,7 +495,7 @@ async def should_agent_respond_ai(
         return False
 
     # For all other agents: Let Claude AI decide based on conversation context
-    if not HAS_CLAUDE_SDK:
+    if not HAS_AI_PROVIDER:
         # Fallback only if SDK unavailable: basic relevance check
         agent = AI_AGENT_PERSONAS.get(agent_id)
         if agent:
@@ -542,18 +510,15 @@ async def should_agent_respond_ai(
         if not agent:
             return False
 
-        # Build conversation context
-        context_messages = []
-        for msg in conversation[-5:]:  # Last 5 messages for context
-            role = "user" if msg['sender']['type'] == 'human' else msg['sender']['name']
-            context_messages.append(f"{role}: {msg['content']}")
-        context = "\n".join(context_messages) if context_messages else ""
+        # Build conversation context (last 10 messages for better context)
+        messages = []
+        for msg in conversation[-10:]:
+            role = "user" if msg['sender']['type'] == 'human' else "assistant"
+            content = msg['content']
+            messages.append(Message(role=role, content=content))
 
-        # Ask Claude AI: "Should I respond to this?"
+        # Ask AI: "Should I respond to this?"
         decision_prompt = f"""You are {agent['name']}, a {agent['role']} in a collaborative team.
-
-Recent conversation:
-{context}
 
 Latest message: {message}
 
@@ -565,31 +530,23 @@ Respond with ONLY one word:
 
 Do not explain. Just answer YES or NO."""
 
-        # Use Claude SDK for intelligent decision
-        # NO LOCK for decisions - these are fast and work fine concurrently
-        options = ClaudeAgentOptions(
-            cwd="/tmp",
-            permission_mode="bypassPermissions",
-            system_prompt=f"You are {agent['name']}, deciding if you should contribute based on your {agent['role']} expertise.",
-            continue_conversation=False,
-            allowed_tools=["write", "read", "bash", "glob", "grep", "webfetch"]
+        messages.append(Message(role="user", content=decision_prompt))
+
+        # Create ChatRequest
+        chat_request = ChatRequest(
+            messages=messages,
+            system=f"You are {agent['name']}, deciding if you should contribute based on your {agent['role']} expertise.",
+            max_tokens=10,  # Very short response
+            temperature=0.3  # Lower temperature for consistent decisions
         )
 
+        # Call AI provider (NO LOCK - fast decisions work concurrently!)
         response_parts = []
-        async for msg in query(prompt=decision_prompt, options=options):
-            # Check .content FIRST (AssistantMessage uses this)
-            if hasattr(msg, 'content'):
-                content = msg.content
-                if isinstance(content, str):
-                    response_parts.append(content)
-                elif isinstance(content, list):
-                    for item in content:
-                        if hasattr(item, 'text'):
-                            response_parts.append(item.text)
-            elif hasattr(msg, 'text') and msg.text:
-                response_parts.append(msg.text)
+        async for chunk in ai_provider.chat(chat_request):
+            if chunk.delta_text:
+                response_parts.append(chunk.delta_text)
 
-        decision = "\n".join(response_parts).strip().upper()
+        decision = "".join(response_parts).strip().upper()
 
         # Log the AI's decision
         logger.info(f"{agent['name']} AI decision for message '{message[:50]}...': {decision}")
@@ -614,7 +571,7 @@ async def lifespan(app: FastAPI):
     logger.info(f"   WebSocket: ws://localhost:4002/ws/{{room_id}} (via gateway: /ws/collaboration/*)")
     logger.info(f"   Humans API: http://localhost:4002/humans (via gateway: /api/collaboration/humans)")
     logger.info(f"   Health: http://localhost:4002/health")
-    logger.info(f"   Claude SDK: {'✅ Enabled' if HAS_CLAUDE_SDK else '⚠️  Simulated Mode'}")
+    logger.info(f"   Claude SDK: {'✅ Enabled' if HAS_AI_PROVIDER else '⚠️  Simulated Mode'}")
     logger.info("=" * 60)
     yield
     logger.info("🛑 Multi-Agent Collaboration BFF Service Shutting Down")
@@ -647,7 +604,7 @@ async def health_check():
         "status": "healthy",
         "service": "collaboration-bff",
         "timestamp": datetime.now().isoformat(),
-        "claude_sdk": HAS_CLAUDE_SDK,
+        "ai_provider": HAS_AI_PROVIDER,
         "active_rooms": len(room_manager.rooms)
     }
 
