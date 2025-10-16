@@ -74,6 +74,18 @@ from persona_loader import AI_AGENT_PERSONAS
 
 logger.info(f"✅ Loaded {len(AI_AGENT_PERSONAS)} real AI agent personas from backend")
 
+# Import workflow suggestion engine
+try:
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from services.workflow_suggestion_engine import WorkflowSuggestionEngine
+    workflow_engine = WorkflowSuggestionEngine()
+    HAS_WORKFLOW_ENGINE = True
+    logger.info("✅ Workflow Suggestion Engine initialized")
+except ImportError as e:
+    HAS_WORKFLOW_ENGINE = False
+    workflow_engine = None
+    logger.warning(f"Workflow Suggestion Engine not available: {e}")
+
 
 # ============================================================================
 # In-Memory Room State (Redis would be used in production)
@@ -208,14 +220,14 @@ async def generate_ai_response(
         # Add current user message
         messages.append(Message(role="user", content=user_message))
 
-        # Use full persona system prompt (NO minimization!)
-        system_prompt = agent.get('system_prompt') or f"You are {agent['name']}, a {agent['role']}. {agent.get('description', '')} Be concise and helpful."
+        # Use CONCISE system prompt for chat collaboration (fast, focused responses)
+        system_prompt = agent.get('concise_system_prompt') or agent.get('system_prompt') or f"You are {agent['name']}, a {agent['role']}. {agent.get('description', '')} Be concise and helpful."
 
         # Create ChatRequest for execution-platform
         chat_request = ChatRequest(
             messages=messages,
             system=system_prompt,
-            max_tokens=2048,
+            max_tokens=2048,  # Good for chat responses
             temperature=0.7
         )
 
@@ -278,7 +290,15 @@ async def generate_maestro_preview(
     room_id: str,
     conversation: List[Dict[str, Any]]
 ) -> Dict[str, Any]:
-    """Generate preview using @Maestro synthesis with claude-agent-sdk"""
+    """
+    Generate preview using @Maestro synthesis with ENHANCED ACCELERATOR-STYLE PROMPT
+
+    UPGRADE: Based on Accelerator's superior performance:
+    - Tool-first directive-heavy prompts
+    - Mandatory design system extraction protocol
+    - Explicit operating modes (Prototyping vs. Iteration)
+    - Focus on immediate execution over explanation
+    """
     agent = AI_AGENT_PERSONAS['maestro']
 
     logger.info(f"🔍 HAS_AI_PROVIDER = {HAS_AI_PROVIDER}")
@@ -298,42 +318,94 @@ async def generate_maestro_preview(
         }
 
     try:
-        # Build conversation context (EXPANDED: last 15 messages for better synthesis)
+        # Build conversation context (FOCUSED: last 10 messages for speed + relevance)
+        # ACCELERATOR INSIGHT: Less context = faster, more focused responses
         messages = []
-        for msg in conversation[-15:]:
+        for msg in conversation[-10:]:
             role = "user" if msg['sender']['type'] == 'human' else "assistant"
             content = msg['content']  # NO truncation!
             messages.append(Message(role=role, content=content))
 
-        # Full Maestro system prompt for code generation
-        system_prompt = agent.get('system_prompt') or """You are Maestro, an expert code synthesis AI.
-Generate complete, self-contained HTML files with inline CSS and JavaScript.
-Focus on creating polished, production-ready code based on the team's discussion."""
+        # ENHANCED MAESTRO SYSTEM PROMPT - ACCELERATOR-STYLE
+        # Key improvements:
+        # 1. Directive-heavy ("Execute, Don't Describe")
+        # 2. Mandatory Design System Extraction Protocol
+        # 3. Explicit quality standards
+        # 4. Tool-first approach
+        system_prompt = """You are 'Maestro', an Elite Code Synthesis AI for collaborative team environments.
 
-        # Comprehensive Maestro prompt
-        prompt = """Based on the team discussion above, create a complete, self-contained HTML application.
+**Core Identity:**
+- Mission: Rapidly translate team requirements into functional, modern, production-ready web applications
+- Output: Complete, self-contained HTML prototypes with inline CSS and JavaScript
+- Standard: Visually appealing, modern best practices (Semantic HTML5, Flexbox/Grid, Vanilla JS)
 
-Requirements:
-- Single index.html file with inline CSS and JavaScript
+**Core Directives:**
+1. **Execute, Don't Describe:** Do NOT explain the code or provide snippets in conversation. Generate complete HTML IMMEDIATELY.
+2. **Quality & Standards:** All output must be:
+   - Visually appealing with modern design aesthetics
+   - Using semantic HTML5, Flexbox/Grid for layout, Vanilla JavaScript
+   - Fully responsive across devices (mobile-first approach)
+   - Self-contained with inline CSS/JS (unless complexity demands separation)
+3. **Team Context:** Synthesize ALL team member input from the discussion. Every agent's contribution matters.
+
+**MANDATORY PROTOCOL: Design System Extraction**
+If the team discussion references ANY website or domain (e.g., "google.com", "linear.app", "notion.so", "http://example.com"):
+
+1. **Identify:** Detect website mentions in team conversation
+2. **Acknowledge:** Note in response: "Analyzing [domain] design system..."
+3. **Extract:** From the conversation context, identify:
+   - Visual Identity: Color palette, typography, spacing, iconography
+   - Layout & Structure: Grid system, navigation patterns, component organization
+   - Interactions: Key functionalities, animations, UI behaviors
+4. **Integrate:** Apply extracted design system as foundation for build
+
+NOTE: Since this is chat-based (not tool-based), extract design insights from team discussion rather than using WebFetch.
+
+**Code Generation Workflow:**
+1. **Analyze Team Discussion:** Understand full requirements from last 10 messages
+2. **Design System Analysis (If Referenced):** Execute Design System Extraction Protocol
+3. **Synthesize:** Combine all team input (technical, design, product perspectives)
+4. **Execute Build:** Generate COMPLETE, FUNCTIONAL HTML with:
+   - Modern, polished design
+   - Inline CSS and JavaScript
+   - Responsive layout
+   - Clean, semantic HTML5 structure
+5. **Output:** Provide ONLY the complete HTML code. NO explanations or snippets."""
+
+        # ENHANCED MAESTRO PROMPT - ACCELERATOR-STYLE
+        # Directive-heavy, action-focused
+        prompt = """Based on the team discussion above, synthesize ALL requirements and create a complete, self-contained HTML application.
+
+**CRITICAL REQUIREMENTS:**
+- Generate COMPLETE, READY-TO-RUN HTML code
+- Single file with inline CSS and JavaScript (preferred for prototypes)
 - Fully functional and interactive
-- Modern, polished design
-- Responsive layout
-- Clean, well-commented code
+- Modern, polished design with professional aesthetics
+- Responsive layout (mobile-first, works on all devices)
+- Clean, semantic HTML5 with proper structure
+- NO explanations - ONLY output the complete HTML code
 
-Generate the complete HTML code."""
+**If team mentioned a specific website or design reference:**
+Apply the Design System Extraction Protocol. Use that site's design language as inspiration.
+
+**Output Format:**
+Provide ONLY the complete HTML code wrapped in ```html``` tags. No commentary, no explanations.
+
+Generate the complete, production-ready code NOW."""
 
         messages.append(Message(role="user", content=prompt))
 
-        # Create ChatRequest
+        # Create ChatRequest with OPTIMIZED settings
+        # ACCELERATOR INSIGHT: Let AI decide token usage, remove artificial limits
         chat_request = ChatRequest(
             messages=messages,
             system=system_prompt,
-            max_tokens=4096,  # More tokens for code generation
-            temperature=0.7
+            max_tokens=8192,  # INCREASED from 4096 for complete code generation
+            temperature=0.7  # Balanced creativity
         )
 
         # Call AI provider (NO LOCK - handles concurrency naturally!)
-        logger.info(f"🚀 Calling AI provider for Maestro preview (parallel execution enabled)")
+        logger.info(f"🚀 Calling AI provider for Maestro preview with ENHANCED ACCELERATOR-STYLE prompt")
         response_parts = []
         async for chunk in ai_provider.chat(chat_request):
             if chunk.delta_text:
@@ -354,9 +426,9 @@ Generate the complete HTML code."""
         if not html_content:
             logger.warning(f"No HTML in response, using simulated preview")
             html_content = generate_simulated_html_preview(conversation)
-            synthesis_notes = "Preview generated (HTML extraction failed)"
+            synthesis_notes = "Preview generated (HTML extraction failed - enhanced prompt active)"
         else:
-            synthesis_notes = "Preview generated using AI code synthesis"
+            synthesis_notes = "✨ Preview generated using ENHANCED Accelerator-style AI synthesis"
 
         return {
             'id': f'preview_{int(time.time())}',
@@ -841,6 +913,14 @@ async def handle_user_message(room_id: str, room: RoomState, data: Dict[str, Any
         'timestamp': message['timestamp']
     })
 
+    # Check for @workflow command
+    if HAS_WORKFLOW_ENGINE and workflow_engine:
+        is_workflow_request = await workflow_engine.detect_workflow_request(content)
+        if is_workflow_request:
+            logger.info(f"🔧 @workflow detected in message, generating suggestions...")
+            await handle_workflow_suggestion(room_id, room, content)
+            # Still allow agents to respond after workflow suggestions
+
     # Route message to ALL AI agents - let each agent's AI decide if they should respond
     # This is TRUE AI collaboration, not scripted/random behavior
 
@@ -953,6 +1033,99 @@ async def generate_and_broadcast_agent_response(
         'payload': ai_message,
         'timestamp': ai_message['timestamp']
     })
+
+
+async def handle_workflow_suggestion(room_id: str, room: RoomState, user_message: str):
+    """Handle @workflow command and generate suggestions"""
+    if not HAS_WORKFLOW_ENGINE or not workflow_engine:
+        logger.warning("Workflow engine not available")
+        return
+
+    # Send Amigo typing indicator (workflow suggestions come from Amigo)
+    await room_manager.broadcast_to_room(room_id, {
+        'type': 'agent_typing',
+        'roomId': room_id,
+        'payload': {
+            'agentId': 'amigo',
+            'agentName': 'Amigo',
+            'agentRole': 'Personal AI Assistant'
+        },
+        'timestamp': datetime.now().isoformat()
+    })
+
+    try:
+        # Extract requirement from message and conversation context
+        requirement = await workflow_engine.extract_requirement(user_message, room.messages)
+
+        # Get workflow suggestions
+        suggestions = await workflow_engine.suggest_workflows(requirement, limit=3)
+
+        # Format response
+        response_text = await workflow_engine.format_suggestion_response(suggestions, requirement)
+
+        # Create Amigo message with suggestions
+        amigo = AI_AGENT_PERSONAS['amigo']
+        suggestion_message = {
+            'id': f'msg_{int(time.time())}_{uuid.uuid4().hex[:8]}',
+            'sender': {
+                'id': 'amigo',
+                'name': amigo['name'],
+                'type': 'ai',
+                'role': amigo['role'],
+                'avatar': amigo['avatar'],
+                'color': amigo['color']
+            },
+            'content': response_text,
+            'timestamp': datetime.now().isoformat(),
+            'workflow_suggestions': [
+                {
+                    'dag_id': sug.dag_id,
+                    'name': sug.name,
+                    'confidence': sug.confidence,
+                    'category': sug.category,
+                    'complexity': sug.complexity
+                }
+                for sug in suggestions
+            ]
+        }
+
+        # Add to room history
+        room.add_message(suggestion_message)
+
+        # Send stopped typing
+        await room_manager.broadcast_to_room(room_id, {
+            'type': 'agent_stopped_typing',
+            'roomId': room_id,
+            'payload': {
+                'agentId': 'amigo'
+            },
+            'timestamp': datetime.now().isoformat()
+        })
+
+        # Broadcast workflow suggestions
+        await room_manager.broadcast_to_room(room_id, {
+            'type': 'workflow_suggestions',
+            'roomId': room_id,
+            'payload': suggestion_message,
+            'timestamp': suggestion_message['timestamp']
+        })
+
+        logger.info(f"✅ Sent {len(suggestions)} workflow suggestions for room {room_id}")
+
+    except Exception as e:
+        logger.error(f"Error generating workflow suggestions: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+
+        # Send error message
+        await room_manager.broadcast_to_room(room_id, {
+            'type': 'agent_stopped_typing',
+            'roomId': room_id,
+            'payload': {
+                'agentId': 'amigo'
+            },
+            'timestamp': datetime.now().isoformat()
+        })
 
 
 async def handle_preview_generation(room_id: str, room: RoomState, websocket: WebSocket):
