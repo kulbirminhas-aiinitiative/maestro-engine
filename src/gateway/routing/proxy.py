@@ -98,6 +98,10 @@ class ProxyRouter:
             for header in hop_by_hop_headers:
                 response_headers.pop(header, None)
 
+            # Remove content-encoding header to prevent browser decoding issues
+            # The gateway returns decompressed content, so encoding header should not be set
+            response_headers.pop("content-encoding", None)
+
             # Add gateway header
             response_headers["X-Gateway"] = "maestro-api-gateway"
 

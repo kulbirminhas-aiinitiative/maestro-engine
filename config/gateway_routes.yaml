@@ -17,6 +17,14 @@ routes:
     requires_auth: false
     cache_ttl: 0  # No caching for auth operations
 
+  # Personas Service (Production Backend on port 3100)
+  # Note: Backend URL includes the path prefix since backend expects full path
+  - path: /api/personas*
+    backend: ${AUTH_SERVICE_URL:http://host.docker.internal:3100/api/personas}
+    rate_limit: 100/minute
+    requires_auth: false
+    cache_ttl: 60  # Cache for 1 minute (read-heavy endpoint)
+
   # Accelerator Mode BFF (Rapid Prototyping)
   - path: /api/v1/accelerator/*
     backend: ${BFF_SERVICE_URL:http://localhost:4001}
@@ -94,6 +102,13 @@ routes:
     requires_auth: false
     cache_ttl: 0
 
+  # Multi-Agent Collaboration (Collaboration BFF)
+  - path: /api/collaboration/*
+    backend: ${COLLABORATION_BFF_URL:http://host.docker.internal:4002}
+    rate_limit: 100/minute
+    requires_auth: false
+    cache_ttl: 0
+
   # WebSocket routes (for real-time updates)
   - path: /ws/guardian/*
     backend: ${MAESTRO_ENGINE_URL:http://localhost:5000}
@@ -110,6 +125,13 @@ routes:
   # Async Workflow WebSocket (NEW - Workflow API Service)
   - path: /ws/workflow-async/*
     backend: ${WORKFLOW_API_URL:http://host.docker.internal:5001}
+    rate_limit: 10/minute
+    requires_auth: false
+    cache_ttl: 0
+
+  # Multi-Agent Collaboration WebSocket (Collaboration BFF)
+  - path: /ws/collaboration/*
+    backend: ${COLLABORATION_BFF_URL:http://host.docker.internal:4002}
     rate_limit: 10/minute
     requires_auth: false
     cache_ttl: 0

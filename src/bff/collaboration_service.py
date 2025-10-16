@@ -42,181 +42,24 @@ except ImportError:
 try:
     from claude_agent_sdk import ClaudeAgentOptions, query
     HAS_CLAUDE_SDK = True
-    logger.info("Claude Agent SDK loaded successfully")
+    logger.info("✅ Claude Agent SDK loaded successfully")
 except ImportError:
     HAS_CLAUDE_SDK = False
     logger.warning("Claude Agent SDK not available - AI responses will be simulated")
 
 # ============================================================================
-# AI Agent Personas (Same as frontend)
+# AI Agent Personas (Loaded from real backend persona definitions)
 # ============================================================================
 
-AI_AGENT_PERSONAS = {
-    'stephen': {
-        'id': 'stephen',
-        'name': 'Stephen',
-        'role': 'Requirements Analyst',
-        'avatar': '📋',
-        'color': '#3b82f6',
-        'status': 'active',
-        'specialization': ['requirements-gathering', 'user-stories', 'acceptance-criteria', 'stakeholder-management'],
-        'personality': 'analytical, detail-oriented, methodical, clarifying',
-        'response_time': 2.0,
-        'system_prompt': """You are Stephen, a Requirements Analyst AI agent in a collaborative team setting.
+# Add current directory to path for persona_loader import
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent))
 
-Your role is to:
-- Gather clear, comprehensive requirements through targeted questions
-- Create well-defined user stories with acceptance criteria
-- Identify edge cases and potential issues early
-- Ensure stakeholder needs are properly understood and documented
+# Import real personas from persona_loader.py
+from persona_loader import AI_AGENT_PERSONAS
 
-When responding:
-- Ask 1-2 clarifying questions to better understand requirements
-- Be concise (2-3 sentences unless detailed analysis is needed)
-- Reference specific details from the conversation
-- Respond naturally as a team member would
-
-You are part of a multi-agent team. Stay focused on your requirements analysis expertise."""
-    },
-    'andy': {
-        'id': 'andy',
-        'name': 'Andy',
-        'role': 'Solution Architect',
-        'avatar': '🏗️',
-        'color': '#8b5cf6',
-        'status': 'active',
-        'specialization': ['system-design', 'architecture', 'scalability', 'technology-stack', 'api-design'],
-        'personality': 'strategic, technical, forward-thinking, pragmatic',
-        'response_time': 2.5,
-        'system_prompt': """You are Andy, a Solution Architect AI agent in a collaborative team setting.
-
-Your role is to:
-- Design scalable, maintainable system architectures
-- Recommend appropriate technology stacks and patterns
-- Consider non-functional requirements (performance, security, scalability)
-- Identify architectural risks and propose mitigations
-
-When responding:
-- Provide architectural insights and recommendations
-- Be concise (2-3 sentences unless deep technical discussion is needed)
-- Reference modern best practices and patterns
-- Respond naturally as a senior architect would
-
-You are part of a multi-agent team. Stay focused on your architectural expertise."""
-    },
-    'sarah': {
-        'id': 'sarah',
-        'name': 'Sarah',
-        'role': 'UX Designer',
-        'avatar': '🎨',
-        'color': '#ec4899',
-        'status': 'active',
-        'specialization': ['ux-design', 'user-research', 'wireframing', 'prototyping', 'accessibility'],
-        'personality': 'creative, user-focused, empathetic, detail-oriented',
-        'response_time': 2.0,
-        'system_prompt': """You are Sarah, a UX Designer AI agent in a collaborative team setting.
-
-Your role is to:
-- Design intuitive, user-friendly interfaces
-- Consider user experience and accessibility
-- Create design systems and visual hierarchies
-- Advocate for end-user needs
-
-When responding:
-- Provide UX insights and design recommendations
-- Be concise (2-3 sentences unless detailed design discussion is needed)
-- Reference user-centered design principles
-- Respond naturally as a designer would
-
-You are part of a multi-agent team. Stay focused on your UX design expertise."""
-    },
-    'marcus': {
-        'id': 'marcus',
-        'name': 'Marcus',
-        'role': 'Backend Developer',
-        'avatar': '⚙️',
-        'color': '#f97316',
-        'status': 'active',
-        'specialization': ['backend-development', 'api-development', 'database-design', 'server-architecture'],
-        'personality': 'pragmatic, detail-oriented, performance-focused, thorough',
-        'response_time': 2.0,
-        'system_prompt': """You are Marcus, a Backend Developer AI agent in a collaborative team setting.
-
-Your role is to:
-- Design and implement robust backend services
-- Create efficient API endpoints and data models
-- Optimize database queries and server performance
-- Ensure security and data integrity
-
-When responding:
-- Provide backend implementation insights
-- Be concise (2-3 sentences unless technical details are needed)
-- Reference best practices for APIs, databases, and server architecture
-- Respond naturally as a backend developer would
-
-You are part of a multi-agent team. Stay focused on your backend development expertise."""
-    },
-    'emma': {
-        'id': 'emma',
-        'name': 'Emma',
-        'role': 'Frontend Developer',
-        'avatar': '💻',
-        'color': '#10b981',
-        'status': 'active',
-        'specialization': ['frontend-development', 'react', 'typescript', 'responsive-design', 'component-architecture'],
-        'personality': 'creative, practical, modern, quality-focused',
-        'response_time': 2.0,
-        'system_prompt': """You are Emma, a Frontend Developer AI agent in a collaborative team setting.
-
-Your role is to:
-- Implement modern, responsive user interfaces
-- Build reusable component architectures
-- Ensure cross-browser compatibility and accessibility
-- Optimize frontend performance
-
-When responding:
-- Provide frontend implementation insights
-- Be concise (2-3 sentences unless technical details are needed)
-- Reference modern frontend best practices (React, TypeScript, etc.)
-- Respond naturally as a frontend developer would
-
-You are part of a multi-agent team. Stay focused on your frontend development expertise."""
-    },
-    'maestro': {
-        'id': 'maestro',
-        'name': 'Maestro',
-        'role': 'Code Synthesis Agent',
-        'avatar': '🤖',
-        'color': '#6366f1',
-        'status': 'active',
-        'specialization': ['code-generation', 'full-stack-development', 'synthesis', 'implementation'],
-        'personality': 'comprehensive, synthesizing, action-oriented, intelligent',
-        'response_time': 5.0,
-        'system_prompt': """You are Maestro, the Code Synthesis AI agent - the executor of the team.
-
-Your role is UNIQUE and CRITICAL:
-- Analyze the ENTIRE team conversation to extract all requirements
-- Synthesize inputs from ALL agents (Stephen's requirements, Andy's architecture, Sarah's UX, Marcus's backend, Emma's frontend)
-- Generate COMPLETE, PRODUCTION-READY code that incorporates everyone's expertise
-- Create fully functional deliverables (HTML/CSS/JS applications)
-
-When generating code:
-- Review the full conversation history carefully
-- Incorporate requirements from Stephen
-- Follow architectural patterns from Andy
-- Implement UX design from Sarah
-- Create backend logic as Marcus suggested
-- Build frontend components as Emma recommended
-- Generate a COMPLETE, SELF-CONTAINED HTML file with inline CSS and JavaScript
-- Use modern best practices (Semantic HTML5, Flexbox/Grid, Vanilla JS)
-
-Your output should be:
-1. A brief synthesis note (1-2 sentences) explaining what you built
-2. The complete, runnable code using the Write tool
-
-You are the synthesis engine that brings the team's discussion to life."""
-    }
-}
+logger.info(f"✅ Loaded {len(AI_AGENT_PERSONAS)} real AI agent personas from backend")
 
 
 # ============================================================================
@@ -318,6 +161,9 @@ class CollaborationRoomManager:
 # Global room manager
 room_manager = CollaborationRoomManager()
 
+# Global SDK lock to serialize claude_agent_sdk access (prevents concurrent execution issues)
+sdk_lock = asyncio.Lock()
+
 
 # ============================================================================
 # AI Agent Response Generation
@@ -342,48 +188,54 @@ async def generate_ai_response(
         return generate_simulated_response(agent, user_message, mentioned_in_message)
 
     try:
-        # Build conversation context (last 10 messages)
+        # Build conversation context (MINIMIZED: last 3 messages only to reduce prompt size)
         context_messages = []
-        for msg in conversation[-10:]:
+        for msg in conversation[-3:]:
             role = "user" if msg['sender']['type'] == 'human' else msg['sender']['name']
-            context_messages.append(f"{role}: {msg['content']}")
+            # Truncate long messages to max 200 chars
+            content = msg['content'][:200] + ('...' if len(msg['content']) > 200 else '')
+            context_messages.append(f"{role}: {content}")
 
         context = "\n".join(context_messages) if context_messages else ""
 
-        # System prompt from persona
-        system_prompt = agent['system_prompt']
+        # MINIMIZED system prompt (instead of full persona)
+        minimal_system_prompt = f"You are {agent['name']}, a {agent['role']}. Be concise and helpful."
 
-        # Create prompt for Claude
-        prompt = f"""Conversation history:
+        # Create MINIMIZED prompt for Claude
+        prompt = f"""Context (last 3 messages):
 {context}
 
-Latest message: {user_message}
-{'(You were mentioned with @' + agent['name'] + ')' if mentioned_in_message else ''}
+Message: {user_message}
+{'(You were @mentioned)' if mentioned_in_message else ''}
 
-Respond naturally as {agent['name']}, the {agent['role']}. Keep your response concise (2-3 sentences unless detailed analysis is needed). Reference the conversation and provide value based on your expertise."""
+Respond briefly (1-2 sentences) as {agent['role']}."""
 
-        # Configure Claude Agent SDK options (same pattern as main BFF)
+        # Configure Claude Agent SDK options (matching working main BFF)
         options = ClaudeAgentOptions(
             cwd="/tmp",
             permission_mode="bypassPermissions",
-            system_prompt=system_prompt,
+            system_prompt=minimal_system_prompt,
             continue_conversation=False,
-            disallowed_tools=["Write", "Edit", "Bash"]  # Conversational only
+            allowed_tools=["write", "read", "bash", "glob", "grep", "webfetch"]
         )
 
-        # Call Claude Agent SDK
+        # Call Claude Agent SDK with serialization lock
         response_parts = []
-        async for message in query(prompt=prompt, options=options):
-            if hasattr(message, 'text') and message.text:
-                response_parts.append(message.text)
-            elif hasattr(message, 'content'):
-                content = message.content
-                if isinstance(content, str):
-                    response_parts.append(content)
-                elif isinstance(content, list):
-                    for item in content:
-                        if hasattr(item, 'text'):
-                            response_parts.append(item.text)
+        async with sdk_lock:
+            logger.info(f"🔒 Acquired SDK lock for {agent_id}")
+            async for message in query(prompt=prompt, options=options):
+                # Check .content FIRST (AssistantMessage uses this)
+                if hasattr(message, 'content'):
+                    content = message.content
+                    if isinstance(content, str):
+                        response_parts.append(content)
+                    elif isinstance(content, list):
+                        for item in content:
+                            if hasattr(item, 'text'):
+                                response_parts.append(item.text)
+                elif hasattr(message, 'text') and message.text:
+                    response_parts.append(message.text)
+            logger.info(f"🔓 Released SDK lock for {agent_id}")
 
         response = "\n".join(response_parts).strip()
         response_dict = {'success': bool(response), 'output': response}
@@ -403,47 +255,36 @@ Respond naturally as {agent['name']}, the {agent['role']}. Keep your response co
 
 
 def generate_simulated_response(agent: Dict[str, Any], user_message: str, mentioned: bool) -> str:
-    """Generate simulated response when Claude SDK is not available"""
-    msg_lower = user_message.lower()
-    agent_id = agent['id']
+    """Generate simulated response when Claude SDK is not available - dynamically based on agent role"""
+    import random
 
-    responses = {
-        'stephen': [
-            "Let me clarify the requirements. What's the primary user persona for this feature? What are the key success criteria?",
-            "Good point! Can you provide more details about the expected user workflow? Are there any edge cases we should consider?",
-            "I want to ensure we capture all requirements. What should happen if the user encounters an error in this flow?"
-        ],
-        'andy': [
-            "From an architectural perspective, I'd recommend a modular approach. Should we use microservices or a monolithic architecture for this?",
-            "We should consider scalability. How many concurrent users are we expecting? I'll design the system to handle that load.",
-            "I suggest we implement this using a RESTful API pattern with proper authentication. What's your preferred tech stack?"
-        ],
-        'sarah': [
-            "From a UX standpoint, we should keep the interface intuitive. Have you considered the user's mental model for this interaction?",
-            "I recommend a clean, minimal design with clear visual hierarchy. What's the primary action you want users to take?",
-            "Accessibility is important here. Let's ensure we have proper color contrast and keyboard navigation."
-        ],
-        'marcus': [
-            "For the backend, I'll set up efficient API endpoints and database schemas. Are we using SQL or NoSQL for this data?",
-            "I can implement that with proper error handling and validation. What's the expected data volume and query patterns?",
-            "Let's optimize for performance. I'll add caching and indexing where needed."
-        ],
-        'emma': [
-            "I'll build that with modern React components and TypeScript for type safety. Should it be responsive across all devices?",
-            "For the frontend implementation, I recommend using React hooks and context for state management. Any specific styling preferences?",
-            "I can create reusable components for this. Let's ensure it's accessible and performs well."
-        ],
-        'maestro': [
+    agent_name = agent['name']
+    agent_role = agent['role']
+    specializations = agent.get('specialization', [])
+    spec_text = specializations[0] if specializations else agent_role
+
+    # Generic response templates based on role
+    templates = [
+        f"As a {agent_role}, I can help with {spec_text}. What specific aspects would you like me to focus on?",
+        f"That's an interesting point! From my {agent_role} perspective, I'd recommend considering {spec_text}.",
+        f"I can assist with {spec_text}. What are your priorities for this requirement?"
+    ]
+
+    # Special handling for Maestro and Amigo
+    if agent['id'] == 'maestro':
+        templates = [
             "I'm analyzing all the team's input to create a complete solution. Generating the code now...",
             "Synthesizing requirements from the team. I'll create a fully functional implementation.",
             "Based on the team discussion, I'll build a complete, production-ready solution."
         ]
-    }
+    elif agent['id'] == 'amigo':
+        templates = [
+            "Hi! I'm here to help you. I'm learning from our interactions to provide better assistance.",
+            "I've noticed you're working on this - would you like me to provide personalized recommendations?",
+            "As your personal AI assistant, I'm adapting to your preferences. How can I support you best?"
+        ]
 
-    # Return a random response from the agent's pool
-    import random
-    agent_responses = responses.get(agent_id, ["I'm here to help with your project!"])
-    return random.choice(agent_responses)
+    return random.choice(templates)
 
 
 async def generate_maestro_preview(
@@ -452,6 +293,9 @@ async def generate_maestro_preview(
 ) -> Dict[str, Any]:
     """Generate preview using @Maestro synthesis with claude-agent-sdk"""
     agent = AI_AGENT_PERSONAS['maestro']
+
+    logger.info(f"🔍 HAS_CLAUDE_SDK = {HAS_CLAUDE_SDK}")
+    logger.info(f"📊 Conversation has {len(conversation)} messages")
 
     # Simulate Maestro's longer processing time
     await asyncio.sleep(agent['response_time'])
@@ -467,59 +311,59 @@ async def generate_maestro_preview(
         }
 
     try:
-        # Build comprehensive context from entire conversation
+        # Build MINIMIZED context from last 5 messages only (not entire conversation)
         context_messages = []
-        for msg in conversation:
+        for msg in conversation[-5:]:
             role = "user" if msg['sender']['type'] == 'human' else msg['sender']['name']
-            context_messages.append(f"{role}: {msg['content']}")
+            # Truncate to max 200 chars per message
+            content = msg['content'][:200] + ('...' if len(msg['content']) > 200 else '')
+            context_messages.append(f"{role}: {content}")
 
         context = "\n".join(context_messages)
 
-        # Maestro's synthesis prompt
-        system_prompt = AI_AGENT_PERSONAS['maestro']['system_prompt']
+        # MINIMIZED Maestro system prompt
+        minimal_system_prompt = "You are Maestro, a code synthesis AI. Create complete HTML files."
 
-        prompt = f"""Review this team conversation and synthesize a complete solution:
-
+        # MINIMIZED Maestro prompt
+        prompt = f"""Team discussion (last 5 messages):
 {context}
 
-Create a COMPLETE, SELF-CONTAINED HTML file that implements everything discussed by the team. Include:
-- All requirements mentioned by users and Stephen
-- Architectural patterns suggested by Andy
-- UX design principles from Sarah
-- Backend logic (simulated in frontend) as Marcus described
-- Modern frontend implementation as Emma would build it
-
-Generate a fully functional, production-ready HTML file with inline CSS and JavaScript."""
+Use Write tool to create './index.html' with complete self-contained HTML (inline CSS/JS).
+Be concise."""
 
         # Create work directory for Maestro
         work_dir = f"/tmp/maestro_collaboration/{room_id}"
         import os
         os.makedirs(work_dir, exist_ok=True)
 
-        # Configure Claude Agent SDK options for Maestro (same pattern as main BFF)
+        # Configure Claude Agent SDK options for Maestro (matching working main BFF)
         options = ClaudeAgentOptions(
             cwd=work_dir,
             permission_mode="bypassPermissions",
-            system_prompt=system_prompt,
+            system_prompt=minimal_system_prompt,
             continue_conversation=False,
-            allowed_tools=["write", "read", "edit"]
+            allowed_tools=["write", "read", "bash", "glob", "grep", "webfetch"]
         )
 
-        # Call Claude Agent SDK with tools enabled for code generation
+        # Call Claude Agent SDK with serialization lock
         response_parts = []
-        async for message in query(prompt=prompt, options=options):
-            if hasattr(message, 'text') and message.text:
-                response_parts.append(message.text)
-            elif hasattr(message, 'content'):
-                content = message.content
-                if isinstance(content, str):
-                    response_parts.append(content)
-                elif isinstance(content, list):
-                    for item in content:
-                        if hasattr(item, 'text'):
-                            response_parts.append(item.text)
+        async with sdk_lock:
+            logger.info(f"🔒 Acquired SDK lock for Maestro preview")
+            async for message in query(prompt=prompt, options=options):
+                # Check .content FIRST (AssistantMessage uses this)
+                if hasattr(message, 'content'):
+                    content = message.content
+                    if isinstance(content, str):
+                        response_parts.append(content)
+                    elif isinstance(content, list):
+                        for item in content:
+                            if hasattr(item, 'text'):
+                                response_parts.append(item.text)
+                elif hasattr(message, 'text') and message.text:
+                    response_parts.append(message.text)
+            logger.info(f"🔓 Released SDK lock for Maestro preview")
 
-        # Check for generated index.html
+        # Check if index.html was created by Write tool
         import pathlib
         index_file = pathlib.Path(work_dir) / "index.html"
         html_content = None
@@ -527,11 +371,24 @@ Generate a fully functional, production-ready HTML file with inline CSS and Java
         if index_file.exists():
             with open(index_file, 'r', encoding='utf-8') as f:
                 html_content = f.read()
+            synthesis_notes = "Preview generated using Claude AI with Write tool"
         else:
-            # If no file was created, use simulated preview
-            html_content = generate_simulated_html_preview(conversation)
+            # Fallback: try to extract HTML from response text
+            full_response = "\n".join(response_parts).strip()
+            if '```html' in full_response:
+                html_start = full_response.find('```html') + 7
+                html_end = full_response.find('```', html_start)
+                if html_end > html_start:
+                    html_content = full_response[html_start:html_end].strip()
+            elif '<!DOCTYPE' in full_response or '<html' in full_response:
+                html_content = full_response
 
-        synthesis_notes = "\n".join(response_parts).strip() or "Preview generated from team discussion"
+            if not html_content:
+                # No HTML found, use simulated preview
+                logger.warning(f"No HTML file created and no HTML in response, using simulated preview")
+                html_content = generate_simulated_html_preview(conversation)
+
+            synthesis_notes = "Preview generated from team discussion"
 
         return {
             'id': f'preview_{int(time.time())}',
@@ -651,28 +508,98 @@ def generate_simulated_html_preview(conversation: List[Dict[str, Any]]) -> str:
 # Agent Invocation Logic
 # ============================================================================
 
-def should_agent_respond(agent_id: str, message: str, mentions: List[str]) -> bool:
-    """Determine if an agent should respond to a message"""
-    # Always respond if mentioned
+async def should_agent_respond_ai(
+    agent_id: str,
+    message: str,
+    mentions: List[str],
+    conversation: List[Dict[str, Any]]
+) -> bool:
+    """
+    Use Claude AI to intelligently decide if agent should respond.
+    This is NOT scripted/random - the AI decides based on context and relevance.
+    """
+    # Always respond if directly mentioned
     if agent_id in mentions:
         return True
 
-    # Maestro only responds when mentioned
+    # Maestro only responds when mentioned (specialized code generation agent)
     if agent_id == 'maestro':
         return False
 
-    # Other agents respond based on keyword relevance (10% chance for natural conversation flow)
-    import random
-    if random.random() < 0.10:  # 10% chance of spontaneous contribution
+    # For all other agents: Let Claude AI decide based on conversation context
+    if not HAS_CLAUDE_SDK:
+        # Fallback only if SDK unavailable: basic relevance check
         agent = AI_AGENT_PERSONAS.get(agent_id)
         if agent:
             msg_lower = message.lower()
-            # Check if message is relevant to agent's specialization
             for keyword in agent['specialization']:
                 if keyword.replace('-', ' ') in msg_lower:
                     return True
+        return False
 
-    return False
+    try:
+        agent = AI_AGENT_PERSONAS.get(agent_id)
+        if not agent:
+            return False
+
+        # Build conversation context
+        context_messages = []
+        for msg in conversation[-5:]:  # Last 5 messages for context
+            role = "user" if msg['sender']['type'] == 'human' else msg['sender']['name']
+            context_messages.append(f"{role}: {msg['content']}")
+        context = "\n".join(context_messages) if context_messages else ""
+
+        # Ask Claude AI: "Should I respond to this?"
+        decision_prompt = f"""You are {agent['name']}, a {agent['role']} in a collaborative team.
+
+Recent conversation:
+{context}
+
+Latest message: {message}
+
+Question: Based on your role as {agent['role']} and your expertise in {', '.join(agent['specialization'])}, should you respond to this message?
+
+Respond with ONLY one word:
+- "YES" if this message is relevant to your expertise and you can add value
+- "NO" if this message is not relevant to your role or others can handle it better
+
+Do not explain. Just answer YES or NO."""
+
+        # Use Claude SDK for intelligent decision
+        # NO LOCK for decisions - these are fast and work fine concurrently
+        options = ClaudeAgentOptions(
+            cwd="/tmp",
+            permission_mode="bypassPermissions",
+            system_prompt=f"You are {agent['name']}, deciding if you should contribute based on your {agent['role']} expertise.",
+            continue_conversation=False,
+            allowed_tools=["write", "read", "bash", "glob", "grep", "webfetch"]
+        )
+
+        response_parts = []
+        async for msg in query(prompt=decision_prompt, options=options):
+            # Check .content FIRST (AssistantMessage uses this)
+            if hasattr(msg, 'content'):
+                content = msg.content
+                if isinstance(content, str):
+                    response_parts.append(content)
+                elif isinstance(content, list):
+                    for item in content:
+                        if hasattr(item, 'text'):
+                            response_parts.append(item.text)
+            elif hasattr(msg, 'text') and msg.text:
+                response_parts.append(msg.text)
+
+        decision = "\n".join(response_parts).strip().upper()
+
+        # Log the AI's decision
+        logger.info(f"{agent['name']} AI decision for message '{message[:50]}...': {decision}")
+
+        return "YES" in decision
+
+    except Exception as e:
+        logger.error(f"Error in AI decision for {agent_id}: {e}")
+        # Fallback: don't respond if AI decision fails
+        return False
 
 
 # ============================================================================
@@ -684,7 +611,8 @@ async def lifespan(app: FastAPI):
     """Lifespan context manager"""
     logger.info("=" * 60)
     logger.info(f"🚀 Multi-Agent Collaboration BFF Service Starting")
-    logger.info(f"   WebSocket: ws://localhost:4002/ws/collaboration/{{room_id}}")
+    logger.info(f"   WebSocket: ws://localhost:4002/ws/{{room_id}} (via gateway: /ws/collaboration/*)")
+    logger.info(f"   Humans API: http://localhost:4002/humans (via gateway: /api/collaboration/humans)")
     logger.info(f"   Health: http://localhost:4002/health")
     logger.info(f"   Claude SDK: {'✅ Enabled' if HAS_CLAUDE_SDK else '⚠️  Simulated Mode'}")
     logger.info("=" * 60)
@@ -724,9 +652,70 @@ async def health_check():
     }
 
 
-@app.websocket("/ws/collaboration/{room_id}")
+@app.get("/api/personas")
+async def get_personas():
+    """Get all available AI agent personas from backend definitions"""
+    return {
+        "personas": [
+            {
+                "id": p["id"],
+                "name": p["name"],
+                "role": p["role"],
+                "avatar": p["avatar"],
+                "color": p["color"],
+                "description": p.get("description", ""),
+                "specialization": p.get("specialization", []),
+                "status": p.get("status", "active")
+            }
+            for p in AI_AGENT_PERSONAS.values()
+        ]
+    }
+
+
+@app.get("/humans")
+async def get_humans():
+    """Get all available human team members (simulated for now)"""
+    # TODO: In production, fetch from backend /api/v1/auth/users endpoint with auth
+    # For now, return simulated team members for collaboration testing
+    return {
+        "humans": [
+            {
+                "id": "kulbir-minhas",
+                "name": "Kulbir Minhas",
+                "email": "kulbir@maestro.com",
+                "role": "Product Manager",
+                "avatar": "KM",
+                "status": "online",
+                "department": "Product",
+                "expertise": ["Product Strategy", "User Research", "Roadmap Planning"]
+            },
+            {
+                "id": "sarah-chen",
+                "name": "Sarah Chen",
+                "email": "sarah.chen@maestro.com",
+                "role": "Senior Engineer",
+                "avatar": "SC",
+                "status": "online",
+                "department": "Engineering",
+                "expertise": ["Backend Development", "System Design", "API Design"]
+            },
+            {
+                "id": "james-williams",
+                "name": "James Williams",
+                "email": "james.w@maestro.com",
+                "role": "UX Designer",
+                "avatar": "JW",
+                "status": "away",
+                "department": "Design",
+                "expertise": ["UI/UX Design", "User Research", "Prototyping"]
+            }
+        ]
+    }
+
+
+@app.websocket("/ws/{room_id}")
 async def collaboration_websocket(websocket: WebSocket, room_id: str):
-    """WebSocket endpoint for multi-agent collaboration"""
+    """WebSocket endpoint for multi-agent collaboration (via gateway: /ws/collaboration/*)"""
     await websocket.accept()
     room = await room_manager.get_or_create_room(room_id)
     await room_manager.connect_to_room(room_id, websocket)
@@ -747,10 +736,13 @@ async def collaboration_websocket(websocket: WebSocket, room_id: str):
             data = await websocket.receive_json()
             message_type = data.get('type')
 
+            logger.info(f"📩 Received WS message type: {message_type}")
+
             if message_type == 'user_message':
                 await handle_user_message(room_id, room, data, websocket)
 
             elif message_type == 'generate_preview':
+                logger.info(f"🎨 Generating Maestro preview for room {room_id}")
                 await handle_preview_generation(room_id, room, websocket)
 
             elif message_type == 'typing_start':
@@ -805,15 +797,29 @@ async def collaboration_websocket(websocket: WebSocket, room_id: str):
                     })
 
                 elif participant_type == 'human':
-                    # For human participants (simulated)
-                    participant = {
-                        'id': participant_id,
-                        'name': participant_id.replace('-', ' ').title(),
-                        'type': 'human',
-                        'role': 'Team Member',
-                        'avatar': participant_id[:2].upper(),
-                        'status': 'online'
-                    }
+                    # Look up human participant data from /humans endpoint
+                    humans_response = await get_humans()
+                    human_data = next((h for h in humans_response['humans'] if h['id'] == participant_id), None)
+
+                    if human_data:
+                        participant = {
+                            'id': human_data['id'],
+                            'name': human_data['name'],
+                            'type': 'human',
+                            'role': human_data.get('role', 'Team Member'),
+                            'avatar': human_data.get('avatar', participant_id[:2].upper()),
+                            'status': human_data.get('status', 'online')
+                        }
+                    else:
+                        # Fallback if human not found in /humans endpoint
+                        participant = {
+                            'id': participant_id,
+                            'name': participant_id.replace('-', ' ').title(),
+                            'type': 'human',
+                            'role': 'Team Member',
+                            'avatar': participant_id[:2].upper(),
+                            'status': 'online'
+                        }
                     room.add_participant(participant)
 
                     # Broadcast participant joined
@@ -855,6 +861,9 @@ async def handle_user_message(room_id: str, room: RoomState, data: Dict[str, Any
     content = data.get('content', '')
     mentions = data.get('mentions', [])
 
+    logger.info(f"📨 Received user message in room {room_id}: '{content[:50]}...' from {sender.get('name', 'Unknown')}")
+    logger.info(f"   Mentions: {mentions}")
+
     # Create message
     message = {
         'id': f'msg_{int(time.time())}_{uuid.uuid4().hex[:8]}',
@@ -875,28 +884,54 @@ async def handle_user_message(room_id: str, room: RoomState, data: Dict[str, Any
         'timestamp': message['timestamp']
     })
 
-    # Route to AI agents based on mentions and relevance
-    responding_agents = []
+    # Route message to ALL AI agents - let each agent's AI decide if they should respond
+    # This is TRUE AI collaboration, not scripted/random behavior
 
-    # Always route to mentioned agents
-    for agent_id in mentions:
-        if agent_id in AI_AGENT_PERSONAS and agent_id != 'maestro':
-            responding_agents.append(agent_id)
+    # Get all agents in the room
+    agent_ids_in_room = [p['id'] for p in room.participants if p['type'] == 'ai' and p['id'] != 'maestro']
 
-    # Check if other agents should respond based on relevance
-    for agent_id in AI_AGENT_PERSONAS:
-        if agent_id not in responding_agents and agent_id != 'maestro':
-            if should_agent_respond(agent_id, content, mentions):
-                responding_agents.append(agent_id)
+    # If no agents in room yet, check all available agents (for initial messages)
+    if not agent_ids_in_room:
+        agent_ids_in_room = [aid for aid in AI_AGENT_PERSONAS.keys() if aid != 'maestro']
 
-    # Generate responses from agents in parallel
-    if responding_agents:
-        tasks = []
-        for agent_id in responding_agents:
-            tasks.append(generate_and_broadcast_agent_response(
-                room_id, room, agent_id, content, agent_id in mentions
-            ))
-        await asyncio.gather(*tasks)
+    logger.info(f"🤖 Checking {len(agent_ids_in_room)} agents for responses: {agent_ids_in_room}")
+
+    # Let each agent's AI decide if they should respond
+    decision_tasks = []
+    for agent_id in agent_ids_in_room:
+        # Skip the sender if they're an agent (agents don't respond to themselves)
+        if sender.get('id') == agent_id:
+            continue
+        decision_tasks.append(check_and_respond_if_relevant(
+            room_id, room, agent_id, content, mentions
+        ))
+
+    # Execute all AI decisions in parallel (fast)
+    if decision_tasks:
+        await asyncio.gather(*decision_tasks)
+
+
+async def check_and_respond_if_relevant(
+    room_id: str,
+    room: RoomState,
+    agent_id: str,
+    content: str,
+    mentions: List[str]
+):
+    """
+    Let the agent's AI decide if the message is relevant, then respond if yes.
+    This is the TRUE AI collaboration approach.
+    """
+    # Ask the AI if this agent should respond
+    should_respond = await should_agent_respond_ai(agent_id, content, mentions, room.messages)
+
+    logger.info(f"   {agent_id}: should_respond = {should_respond}")
+
+    if should_respond:
+        # Generate and broadcast response
+        await generate_and_broadcast_agent_response(
+            room_id, room, agent_id, content, agent_id in mentions
+        )
 
 
 async def generate_and_broadcast_agent_response(
