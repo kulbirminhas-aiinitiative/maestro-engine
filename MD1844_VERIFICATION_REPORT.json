@@ -1,0 +1,155 @@
+{
+  "report_title": "MD-1844 Template Promotion Service Core - Verification Report",
+  "report_date": "2025-11-28T03:00:00Z",
+  "jira_ticket": "MD-1844",
+  "jira_status": "Done",
+  "project": "maestro-engine-new",
+  "summary": {
+    "unit_tests_passed": 56,
+    "unit_tests_failed": 0,
+    "acceptance_criteria_met": 6,
+    "acceptance_criteria_total": 6,
+    "overall_status": "COMPLETE"
+  },
+  "acceptance_criteria": {
+    "AC-1": {
+      "title": "Criteria Validation",
+      "description": "Promotion criteria validation with configurable thresholds",
+      "status": "PASSED",
+      "tests": [
+        "test_all_criteria_passed",
+        "test_quality_score_failed",
+        "test_security_score_failed",
+        "test_tests_failed",
+        "test_coverage_failed",
+        "test_multiple_failures",
+        "test_custom_thresholds",
+        "test_criteria_to_dict"
+      ]
+    },
+    "AC-2": {
+      "title": "Metadata Extraction",
+      "description": "Template metadata extraction and enrichment",
+      "status": "PASSED",
+      "tests": [
+        "test_extract_basic_metadata",
+        "test_extract_author",
+        "test_extract_tags",
+        "test_extract_description",
+        "test_detect_framework",
+        "test_merge_existing_metadata",
+        "test_metadata_to_dict"
+      ]
+    },
+    "AC-3": {
+      "title": "Semantic Versioning",
+      "description": "Version calculation (major/minor/patch based on changes)",
+      "status": "PASSED",
+      "tests": [
+        "test_patch_bump_default",
+        "test_minor_bump_feature",
+        "test_major_bump_breaking",
+        "test_major_bump_flag",
+        "test_force_bump",
+        "test_parse_version_with_v_prefix",
+        "test_initial_version",
+        "test_auto_version_disabled"
+      ]
+    },
+    "AC-4": {
+      "title": "Changelog Generation",
+      "description": "Changelog generation from commit history",
+      "status": "PASSED",
+      "tests": [
+        "test_generate_changelog_basic",
+        "test_generate_changelog_empty_changes",
+        "test_changelog_to_markdown",
+        "test_changelog_disabled",
+        "test_changelog_entry_to_dict"
+      ]
+    },
+    "AC-5": {
+      "title": "Quality Fabric Integration",
+      "description": "Integration with Quality Fabric for validation",
+      "status": "PASSED",
+      "tests": [
+        "test_mock_validation",
+        "test_mock_validation_scores",
+        "test_mock_validation_security_penalty"
+      ]
+    },
+    "AC-6": {
+      "title": "Feature Flag Support",
+      "description": "Feature flag check: FF_TEMPLATE_PROMOTION_ENABLED",
+      "status": "PASSED",
+      "tests": [
+        "test_default_promotion_enabled",
+        "test_promotion_disabled",
+        "test_promotion_enabled_explicit",
+        "test_auto_version_enabled",
+        "test_changelog_disabled",
+        "test_check_feature_flag_enabled",
+        "test_check_feature_flag_disabled"
+      ]
+    }
+  },
+  "files_created": [
+    {
+      "path": "src/services/template_promotion_service.py",
+      "description": "Core promotion service implementation",
+      "lines": 750,
+      "classes": [
+        "FeatureFlags",
+        "PromotionStatus",
+        "VersionBumpType",
+        "PromotionEnvironment",
+        "PromotionFailureReason",
+        "PromotionThresholds",
+        "TemplateMetadata",
+        "ChangelogEntry",
+        "Changelog",
+        "PromotionCriteria",
+        "PromotionResult",
+        "TemplatePromotionService"
+      ]
+    },
+    {
+      "path": "tests/unit/test_template_promotion_service.py",
+      "description": "Comprehensive unit tests",
+      "test_count": 56,
+      "test_classes": [
+        "TestFeatureFlags",
+        "TestFeatureFlagCheck",
+        "TestPromotionCriteriaValidation",
+        "TestMetadataExtraction",
+        "TestLanguageDetection",
+        "TestVersionCalculation",
+        "TestChangelogGeneration",
+        "TestQualityFabricIntegration",
+        "TestPromotionFlow",
+        "TestServiceUtilities",
+        "TestPromotionThresholds",
+        "TestTemplateMetadata"
+      ]
+    }
+  ],
+  "api_methods": [
+    "promote_template() - Main promotion method",
+    "validate_promotion_criteria() - Criteria validation",
+    "extract_metadata() - Metadata extraction",
+    "calculate_version() - Version calculation",
+    "generate_changelog() - Changelog generation",
+    "validate_with_quality_fabric() - QF integration",
+    "check_feature_flag() - Feature flag check"
+  ],
+  "feature_flags": [
+    "FF_TEMPLATE_PROMOTION_ENABLED - Enable/disable promotion",
+    "FF_AUTO_VERSION_BUMP - Enable/disable auto versioning",
+    "FF_CHANGELOG_GENERATION - Enable/disable changelog"
+  ],
+  "dependencies_on_next_tasks": [
+    "MD-1845: POST /api/templates/promote endpoint uses this service",
+    "MD-1846: Approval workflow extends this service",
+    "MD-1847: Semantic versioning uses calculate_version()"
+  ]
+}

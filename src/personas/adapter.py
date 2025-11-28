@@ -94,10 +94,14 @@ class MaestroPersonaAdapter:
             f"Deliver {cap.replace('_', ' ')}" for cap in persona.capabilities.core[:8]
         ]
 
+        # Extract human_alias from metadata if available
+        human_alias = persona.metadata.human_alias if hasattr(persona.metadata, 'human_alias') else None
+        name_to_use = human_alias if human_alias else persona.display_name
+
         # Legacy format
         legacy_persona = {
             "id": persona.persona_id,
-            "name": persona.display_name,
+            "name": name_to_use,  # Use human name (e.g., "Marcus") instead of role
             "role_id": category_to_role.get(persona.metadata.category, "other"),
             "phase": category_to_phase.get(persona.metadata.category, "implementation"),
             "expertise": expertise,

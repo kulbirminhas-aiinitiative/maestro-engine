@@ -9,10 +9,11 @@
     "created_at": "2025-10-05",
     "updated_at": "2025-10-05",
     "category": "quality_security",
-    "status": "active"
+    "status": "active",
+    "human_alias": "Victor"
   },
   "role": {
-    "primary_role": "deliverable_validator",
+    "primary_role": "Deliverable Validator",
     "experience_level": 8,
     "autonomy_level": 9,
     "specializations": [

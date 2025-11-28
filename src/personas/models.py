@@ -38,6 +38,7 @@ class PersonaMetadata(BaseModel):
     updated_at: str  # ISO date
     category: PersonaCategory
     status: PersonaStatus = PersonaStatus.ACTIVE
+    human_alias: Optional[str] = Field(None, min_length=2, max_length=50, description="Human name for the agent (e.g., 'Marcus', 'Emma')")
 
 
 class PersonaRole(BaseModel):

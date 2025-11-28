@@ -1,0 +1,495 @@
+{
+  "workflow_id": "ideal-workflow-template-v1",
+  "workflow_name": "Ideal DAG Workflow Template",
+  "description": "Best-practice template for creating validated, production-ready DAG workflows",
+  "version": "1.0.0",
+  "created_by": "maestro-platform",
+  "metadata": {
+    "template_version": "1.0.0",
+    "use_case": "Full SDLC workflow with all phases",
+    "validation_status": "passed",
+    "recommended_for": [
+      "software-development",
+      "product-launch",
+      "feature-development"
+    ]
+  },
+  "nodes": [
+    {
+      "id": "requirements-001",
+      "type": "phase",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "data": {
+        "label": "Requirements Gathering",
+        "phaseType": "requirements",
+        "description": "Gather and document all project requirements",
+        "assignedTeam": [
+          "ai-product-manager",
+          "human-stakeholder-001"
+        ],
+        "assignedExecutorAI": "ai-product-manager",
+        "attributes": {
+          "priority": "high",
+          "estimatedDuration": "5 days",
+          "deliverables": [
+            "requirements-doc",
+            "user-stories",
+            "acceptance-criteria"
+          ],
+          "acceptanceCriteria": [
+            "All stakeholders interviewed",
+            "Requirements document approved",
+            "User stories defined with acceptance criteria"
+          ],
+          "checkpoints": [
+            {
+              "id": "cp-req-001",
+              "name": "Stakeholder Alignment",
+              "description": "Verify all stakeholders agree on requirements",
+              "required": true
+            },
+            {
+              "id": "cp-req-002",
+              "name": "Requirements Review",
+              "description": "Technical feasibility review completed",
+              "required": true
+            }
+          ],
+          "qualityGates": [
+            {
+              "id": "qg-req-001",
+              "name": "Requirements Completeness",
+              "description": "All requirement categories covered",
+              "threshold": 100,
+              "weight": 0.6
+            },
+            {
+              "id": "qg-req-002",
+              "name": "Stakeholder Approval",
+              "description": "Minimum 90% stakeholder approval",
+              "threshold": 90,
+              "weight": 0.4
+            }
+          ],
+          "requirements": [
+            "Conduct stakeholder interviews and document functional and non-functional requirements"
+          ]
+        },
+        "requirementText": "Conduct stakeholder interviews and document functional and non-functional requirements",
+        "chat": {
+          "messages": [],
+          "notes": []
+        },
+        "status": "pending",
+        "phase": "requirements",
+        "timeout": 604800
+      }
+    },
+    {
+      "id": "design-001",
+      "type": "phase",
+      "position": {
+        "x": 400,
+        "y": 100
+      },
+      "data": {
+        "label": "System Design",
+        "phaseType": "architecture",
+        "description": "Create detailed system architecture and design",
+        "assignedTeam": [
+          "ai-architect",
+          "ai-tech-lead",
+          "human-designer-001"
+        ],
+        "assignedExecutorAI": "ai-architect",
+        "attributes": {
+          "priority": "high",
+          "estimatedDuration": "7 days",
+          "deliverables": [
+            "architecture-doc",
+            "design-diagrams",
+            "api-specs"
+          ],
+          "acceptanceCriteria": [
+            "Architecture diagram completed",
+            "API specifications defined",
+            "Database schema designed",
+            "Security considerations documented"
+          ],
+          "checkpoints": [
+            {
+              "id": "cp-design-001",
+              "name": "Architecture Review",
+              "description": "Architecture peer review passed",
+              "required": true
+            },
+            {
+              "id": "cp-design-002",
+              "name": "Scalability Validation",
+              "description": "Design can handle projected load",
+              "required": true
+            }
+          ],
+          "qualityGates": [
+            {
+              "id": "qg-design-001",
+              "name": "Design Quality",
+              "description": "Design review score",
+              "threshold": 85,
+              "weight": 0.5
+            },
+            {
+              "id": "qg-design-002",
+              "name": "Security Score",
+              "description": "Security review passed",
+              "threshold": 95,
+              "weight": 0.5
+            }
+          ],
+          "requirements": [
+            "Design scalable system architecture that meets all requirements"
+          ]
+        },
+        "requirementText": "Design scalable system architecture that meets all requirements",
+        "chat": {
+          "messages": [],
+          "notes": []
+        },
+        "status": "pending",
+        "phase": "architecture",
+        "timeout": 604800
+      }
+    },
+    {
+      "id": "implementation-001",
+      "type": "phase",
+      "position": {
+        "x": 700,
+        "y": 100
+      },
+      "data": {
+        "label": "Implementation",
+        "phaseType": "implementation",
+        "description": "Develop and implement the system according to design",
+        "assignedTeam": [
+          "ai-senior-developer",
+          "ai-developer-001",
+          "ai-developer-002",
+          "human-engineer-001"
+        ],
+        "assignedExecutorAI": "ai-senior-developer",
+        "attributes": {
+          "priority": "high",
+          "estimatedDuration": "21 days",
+          "deliverables": [
+            "source-code",
+            "unit-tests",
+            "integration-tests",
+            "documentation"
+          ],
+          "acceptanceCriteria": [
+            "All features implemented",
+            "Unit test coverage >= 80%",
+            "Integration tests passing",
+            "Code review completed",
+            "No critical bugs"
+          ],
+          "checkpoints": [
+            {
+              "id": "cp-impl-001",
+              "name": "Code Review",
+              "description": "Peer code review passed",
+              "required": true
+            },
+            {
+              "id": "cp-impl-002",
+              "name": "Test Coverage",
+              "description": "Minimum test coverage achieved",
+              "required": true
+            },
+            {
+              "id": "cp-impl-003",
+              "name": "Security Scan",
+              "description": "No critical vulnerabilities",
+              "required": true
+            }
+          ],
+          "qualityGates": [
+            {
+              "id": "qg-impl-001",
+              "name": "Code Quality",
+              "description": "Static analysis score",
+              "threshold": 85,
+              "weight": 0.3
+            },
+            {
+              "id": "qg-impl-002",
+              "name": "Test Coverage",
+              "description": "Unit + integration coverage",
+              "threshold": 80,
+              "weight": 0.3
+            },
+            {
+              "id": "qg-impl-003",
+              "name": "Security",
+              "description": "Vulnerability scan score",
+              "threshold": 95,
+              "weight": 0.4
+            }
+          ],
+          "requirements": [
+            "Implement all features according to design specifications with comprehensive test coverage"
+          ]
+        },
+        "requirementText": "Implement all features according to design specifications with comprehensive test coverage",
+        "chat": {
+          "messages": [],
+          "notes": []
+        },
+        "status": "pending",
+        "phase": "implementation",
+        "timeout": 604800
+      }
+    },
+    {
+      "id": "testing-001",
+      "type": "phase",
+      "position": {
+        "x": 1000,
+        "y": 100
+      },
+      "data": {
+        "label": "Quality Assurance",
+        "phaseType": "testing",
+        "description": "Comprehensive testing and quality validation",
+        "assignedTeam": [
+          "ai-qa-engineer",
+          "ai-test-automation",
+          "human-qa-001"
+        ],
+        "assignedExecutorAI": "ai-qa-engineer",
+        "attributes": {
+          "priority": "high",
+          "estimatedDuration": "10 days",
+          "deliverables": [
+            "test-reports",
+            "bug-reports",
+            "performance-metrics"
+          ],
+          "acceptanceCriteria": [
+            "All test cases executed",
+            "No critical or high-priority bugs",
+            "Performance requirements met",
+            "Security testing passed",
+            "UAT approved"
+          ],
+          "checkpoints": [
+            {
+              "id": "cp-test-001",
+              "name": "Functional Testing",
+              "description": "All functional tests passing",
+              "required": true
+            },
+            {
+              "id": "cp-test-002",
+              "name": "Performance Testing",
+              "description": "Performance benchmarks met",
+              "required": true
+            },
+            {
+              "id": "cp-test-003",
+              "name": "UAT Sign-off",
+              "description": "User acceptance testing approved",
+              "required": true
+            }
+          ],
+          "qualityGates": [
+            {
+              "id": "qg-test-001",
+              "name": "Test Pass Rate",
+              "description": "Percentage of passing tests",
+              "threshold": 98,
+              "weight": 0.4
+            },
+            {
+              "id": "qg-test-002",
+              "name": "Bug Severity",
+              "description": "No critical/high bugs remaining",
+              "threshold": 100,
+              "weight": 0.4
+            },
+            {
+              "id": "qg-test-003",
+              "name": "Performance",
+              "description": "Performance requirements met",
+              "threshold": 95,
+              "weight": 0.2
+            }
+          ],
+          "requirements": [
+            "Execute comprehensive test suite and validate all quality requirements"
+          ]
+        },
+        "requirementText": "Execute comprehensive test suite and validate all quality requirements",
+        "chat": {
+          "messages": [],
+          "notes": []
+        },
+        "status": "pending",
+        "phase": "testing",
+        "timeout": 604800
+      }
+    },
+    {
+      "id": "deployment-001",
+      "type": "phase",
+      "position": {
+        "x": 1300,
+        "y": 100
+      },
+      "data": {
+        "label": "Deployment",
+        "phaseType": "deployment",
+        "description": "Deploy to production environment",
+        "assignedTeam": [
+          "ai-devops-engineer",
+          "ai-sre",
+          "human-ops-001"
+        ],
+        "assignedExecutorAI": "ai-devops-engineer",
+        "attributes": {
+          "priority": "critical",
+          "estimatedDuration": "3 days",
+          "deliverables": [
+            "deployment-plan",
+            "rollback-plan",
+            "monitoring-setup",
+            "runbook"
+          ],
+          "acceptanceCriteria": [
+            "Zero-downtime deployment",
+            "Health checks passing",
+            "Monitoring and alerts configured",
+            "Rollback plan validated",
+            "Performance metrics baseline established"
+          ],
+          "checkpoints": [
+            {
+              "id": "cp-deploy-001",
+              "name": "Pre-deployment Validation",
+              "description": "All pre-flight checks passed",
+              "required": true
+            },
+            {
+              "id": "cp-deploy-002",
+              "name": "Smoke Tests",
+              "description": "Post-deployment smoke tests passing",
+              "required": true
+            },
+            {
+              "id": "cp-deploy-003",
+              "name": "Monitoring Verification",
+              "description": "All monitoring and alerts active",
+              "required": true
+            }
+          ],
+          "qualityGates": [
+            {
+              "id": "qg-deploy-001",
+              "name": "Deployment Success",
+              "description": "Deployment completed without errors",
+              "threshold": 100,
+              "weight": 0.5
+            },
+            {
+              "id": "qg-deploy-002",
+              "name": "System Health",
+              "description": "All health checks passing",
+              "threshold": 100,
+              "weight": 0.3
+            },
+            {
+              "id": "qg-deploy-003",
+              "name": "Monitoring Coverage",
+              "description": "All critical metrics monitored",
+              "threshold": 95,
+              "weight": 0.2
+            }
+          ],
+          "requirements": [
+            "Deploy application to production with zero downtime and full monitoring"
+          ]
+        },
+        "requirementText": "Deploy application to production with zero downtime and full monitoring",
+        "chat": {
+          "messages": [],
+          "notes": []
+        },
+        "status": "pending",
+        "phase": "deployment",
+        "timeout": 604800
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-req-to-design",
+      "source": "requirements-001",
+      "target": "design-001",
+      "type": "smoothstep",
+      "animated": false,
+      "label": "Requirements Approved"
+    },
+    {
+      "id": "edge-design-to-impl",
+      "source": "design-001",
+      "target": "implementation-001",
+      "type": "smoothstep",
+      "animated": false,
+      "label": "Design Approved"
+    },
+    {
+      "id": "edge-impl-to-test",
+      "source": "implementation-001",
+      "target": "testing-001",
+      "type": "smoothstep",
+      "animated": false,
+      "label": "Code Complete"
+    },
+    {
+      "id": "edge-test-to-deploy",
+      "source": "testing-001",
+      "target": "deployment-001",
+      "type": "smoothstep",
+      "animated": false,
+      "label": "QA Approved"
+    }
+  ],
+  "teamChat": {
+    "messages": [],
+    "participants": []
+  },
+  "workflowConfig": {
+    "allowParallelExecution": false,
+    "autoAdvanceOnGatePass": false,
+    "requireAllCheckpoints": true,
+    "minimumQualityScore": 80,
+    "notificationSettings": {
+      "onPhaseComplete": true,
+      "onGateFailure": true,
+      "onCheckpointMissed": true
+    }
+  },
+  "validationRules": {
+    "enforceUniqueNodeIds": true,
+    "requireAssignedTeam": true,
+    "requireExecutorAI": true,
+    "requirePhaseType": true,
+    "requireAcceptanceCriteria": true,
+    "minimumCheckpoints": 1,
+    "minimumQualityGates": 1
+  }
+}

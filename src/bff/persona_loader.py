@@ -19,9 +19,17 @@ def load_persona_from_file(filepath: Path) -> Dict[str, Any]:
     # Extract key info
     persona_id = data.get('persona_id')
     display_name = data.get('display_name', persona_id.replace('_', ' ').title())
+
+    # Extract human_alias from metadata (NEW: use human name if available)
+    metadata = data.get('metadata', {})
+    human_alias = metadata.get('human_alias')
+
+    # Use human_alias if available, otherwise fall back to display_name
+    name_to_use = human_alias if human_alias else display_name
+
     role = data.get('role', {})
     primary_role = role.get('primary_role', persona_id)
-    description = data.get('metadata', {}).get('description', '')
+    description = metadata.get('description', '')
     specializations = role.get('specializations', [])
 
     # Get system prompt from prompts section
@@ -31,11 +39,11 @@ def load_persona_from_file(filepath: Path) -> Dict[str, Any]:
     # Create collaboration-friendly persona
     return {
         'id': persona_id,
-        'name': display_name,
-        'role': display_name,  # Use display name as role
+        'name': name_to_use,  # NOW USES HUMAN NAME (e.g., "Marcus")
+        'role': display_name,  # Keep role name separate (e.g., "Backend Developer")
         'avatar': get_avatar_for_role(persona_id),
         'color': get_color_for_role(persona_id),
-        'status': 'active' if data.get('metadata', {}).get('status') == 'active' else 'active',
+        'status': 'active' if metadata.get('status') == 'active' else 'active',
         'specialization': specializations,
         'personality': f"professional, expert in {primary_role}",
         'response_time': 2.0,

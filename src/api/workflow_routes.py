@@ -18,6 +18,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from api.models import QualityValidation, TemplateExtraction, WorkflowRequest, WorkflowResponse
 
+# MD-1876: Import input sanitizer for security hardening
+from utils.input_sanitizer import sanitize_string, sanitize_path
+
 # Import UTCP workflow
 try:
     from maestro_mcp.enhanced_lean_ultimate_mega_team_utcp import (
@@ -65,28 +68,45 @@ async def execute_workflow(request: WorkflowRequest):
     execution_stats["total"] += 1
 
     try:
+        # MD-1876: Sanitize input fields for security
+        sanitized_requirement = sanitize_string(
+            request.requirement,
+            max_length=10000,
+            field_type="requirement"
+        )
+        sanitized_session_id = sanitize_string(
+            request.session_id,
+            max_length=200,
+            field_type="name",
+            allow_newlines=False
+        ) if request.session_id else None
+        sanitized_project_path = sanitize_path(
+            request.project_path,
+            max_length=500
+        ) if request.project_path else ""
+
         # Build configuration
         config = EnhancedTeamConfig(
             selected_personas=request.selected_personas,
             enable_rag=request.enable_rag,
             enable_mcp=request.enable_mcp,
             enable_utcp=request.enable_utcp,
-            session_id=request.session_id or f"api_session_{int(time.time())}",
-            project_path=request.project_path or "",
+            session_id=sanitized_session_id or f"api_session_{int(time.time())}",
+            project_path=sanitized_project_path,
             max_execution_time=request.max_execution_time,
             cache_enabled=True,
             async_operations=True,
             resource_cleanup=True,
         )
 
-        logger.info(f"🚀 Executing workflow: {request.requirement[:100]}...")
+        logger.info(f"🚀 Executing workflow: {sanitized_requirement[:100]}...")
         logger.info(
             f"📋 Config: UTCP={request.enable_utcp}, RAG={request.enable_rag}, MCP={request.enable_mcp}"
         )
 
-        # Execute workflow
+        # Execute workflow with sanitized requirement
         result = await execute_enhanced_lean_workflow_utcp(
-            requirement=request.requirement, config=config
+            requirement=sanitized_requirement, config=config
         )
 
         execution_time = time.time() - start_time

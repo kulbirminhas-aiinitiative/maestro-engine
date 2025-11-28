@@ -26,6 +26,40 @@ from pydantic import BaseModel, Field
 from bff.redis_state_manager import get_redis_state_manager
 from bff.websocket_manager import get_websocket_manager
 
+# Import policy service for ML routing (EPIC-1)
+try:
+    from services.policy_service import (
+        get_policy_evaluator,
+        RoutingDecision,
+        RoutingLocus,
+        ReasonCode,
+    )
+    HAS_POLICY_SERVICE = True
+except ImportError:
+    HAS_POLICY_SERVICE = False
+
+# Import gate service for quality gates (EPIC-2)
+try:
+    from services.gate_service import (
+        get_gate_service,
+        GateType,
+        GateStatus,
+        GateEnforcement,
+        EvidenceType,
+    )
+    from api.gate_routes import router as gate_router
+    HAS_GATE_SERVICE = True
+except ImportError:
+    HAS_GATE_SERVICE = False
+    gate_router = None
+
+# Import template validation service (Epic MD-1822)
+try:
+    from services.template_validation_service import get_template_validation_service
+    HAS_TEMPLATE_VALIDATION = True
+except ImportError:
+    HAS_TEMPLATE_VALIDATION = False
+
 # Try to import shared logging, fall back to standard logging
 try:
     from maestro_core_logging import configure_logging, get_logger
@@ -117,6 +151,50 @@ class WorkflowResponse(BaseModel):
     project_path: str
 
 
+# Policy Routing Models (EPIC-1: ML Routing Policy Service)
+class PolicyRouteRequest(BaseModel):
+    """Request for routing policy evaluation."""
+    prompt: str = Field(..., description="The prompt/requirement to evaluate for routing")
+    session_id: Optional[str] = Field(None, description="Session ID for context")
+    request_type: str = Field("chat", description="Type of request: chat, workflow, preview")
+
+
+class PolicyRouteFeatures(BaseModel):
+    """Extracted features from the request."""
+    token_count: int
+    char_count: int
+    word_count: int
+    complexity_score: float
+    has_code_blocks: bool
+    has_urls: bool
+    requires_file_operations: bool
+    requires_external_api: bool
+    requires_database: bool
+    is_query: bool
+    is_preview_request: bool
+    is_multi_step: bool
+    estimated_personas: int
+    estimated_time_ms: int
+    estimated_memory_mb: int
+    session_has_history: bool
+    request_type: str
+
+
+class PolicyRouteResponse(BaseModel):
+    """Response from routing policy evaluation."""
+    locus: str = Field(..., description="Routing destination: 'fe' or 'backend'")
+    reason_code: str = Field(..., description="Reason for routing decision")
+    features: PolicyRouteFeatures = Field(..., description="Extracted request features")
+    confidence: float = Field(..., description="Confidence in routing decision (0-1)")
+    request_id: str = Field(..., description="Unique request identifier")
+    session_id: Optional[str] = Field(None, description="Session ID if provided")
+    timestamp: str = Field(..., description="ISO timestamp of decision")
+    decision_time_ms: float = Field(..., description="Time to make decision in ms")
+    was_overridden: bool = Field(False, description="Whether decision was overridden")
+    override_source: Optional[str] = Field(None, description="Source of override if any")
+    original_locus: Optional[str] = Field(None, description="Original locus before override")
+
+
 # Initialize FastAPI
 app = FastAPI(
     title="MAESTRO Unified BFF Service",
@@ -166,6 +244,9 @@ async def startup_event():
     logger.info(f"  - WebSocket: ready")
     logger.info(f"  - Prometheus: {'enabled' if HAS_PROMETHEUS else 'disabled'}")
     logger.info(f"  - Shared Logging: {'enabled' if HAS_SHARED_LOGGING else 'disabled'}")
+    logger.info(f"  - ML Routing Policy (EPIC-1): {'enabled' if HAS_POLICY_SERVICE else 'disabled'}")
+    logger.info(f"  - Gate Framework (EPIC-2): {'enabled' if HAS_GATE_SERVICE else 'disabled'}")
+    logger.info(f"  - Template Validation (MD-1822): {'enabled' if HAS_TEMPLATE_VALIDATION else 'disabled'}")
     logger.info("=" * 60)
 
 
@@ -187,9 +268,138 @@ async def health_check():
             "claude_agent_sdk": True,
             "redis": await redis_state.session_exists("health_check"),
             "websocket_connections": ws_manager.get_connection_count(),
+            "policy_service": HAS_POLICY_SERVICE,
+            "gate_service": HAS_GATE_SERVICE,
+            "template_validation": HAS_TEMPLATE_VALIDATION,
         },
         "architecture": "unified_bff",
     }
+
+
+# ============================================================================
+# ML Routing Policy Endpoint (EPIC-1)
+# ============================================================================
+
+
+@app.post("/api/policy/route", response_model=PolicyRouteResponse)
+async def evaluate_routing_policy(
+    request: PolicyRouteRequest,
+    http_request: Request,
+):
+    """
+    Evaluate routing policy for a request.
+
+    EPIC-1: ML Routing Policy Service
+    - AC-1: Returns {locus: fe|backend, reason_code, features} in <50ms p50
+    - AC-2: Decisions logged with request_id; WS event ws:routing:decision emitted
+    - AC-3: Override header X-Route-Locus respected; audit recorded
+
+    Args:
+        request: PolicyRouteRequest with prompt and optional session_id
+        http_request: FastAPI Request object for headers
+
+    Returns:
+        PolicyRouteResponse with routing decision and features
+    """
+    REQUEST_COUNT.labels(endpoint="/api/policy/route").inc()
+    start_time = time.time()
+
+    if not HAS_POLICY_SERVICE:
+        raise HTTPException(
+            status_code=503,
+            detail="Policy service not available. FF_ML_ROUTING_ENABLED may be disabled."
+        )
+
+    try:
+        # Get policy evaluator
+        evaluator = get_policy_evaluator()
+
+        # Check for override header
+        override_locus = http_request.headers.get("X-Route-Locus")
+
+        # Get session history if session_id provided
+        session_history = None
+        if request.session_id:
+            state = await redis_state.get_session_state(request.session_id)
+            if state:
+                session_history = state.get("conversation", [])
+
+        # Evaluate routing policy
+        decision = evaluator.evaluate(
+            prompt=request.prompt,
+            session_id=request.session_id,
+            session_history=session_history,
+            request_type=request.request_type,
+            override_locus=override_locus,
+        )
+
+        # Emit WebSocket event (ws:routing:decision) if session has active connection
+        if request.session_id and ws_manager.is_connected(request.session_id):
+            await ws_manager.send_message(
+                request.session_id,
+                {
+                    "type": "routing_decision",
+                    "event": "ws:routing:decision",
+                    "locus": decision.locus.value,
+                    "reason_code": decision.reason_code.value,
+                    "confidence": decision.confidence,
+                    "request_id": decision.request_id,
+                    "timestamp": decision.timestamp,
+                    "was_overridden": decision.was_overridden,
+                }
+            )
+
+        # Build response
+        response = PolicyRouteResponse(
+            locus=decision.locus.value,
+            reason_code=decision.reason_code.value,
+            features=PolicyRouteFeatures(
+                token_count=decision.features.token_count,
+                char_count=decision.features.char_count,
+                word_count=decision.features.word_count,
+                complexity_score=decision.features.complexity_score,
+                has_code_blocks=decision.features.has_code_blocks,
+                has_urls=decision.features.has_urls,
+                requires_file_operations=decision.features.requires_file_operations,
+                requires_external_api=decision.features.requires_external_api,
+                requires_database=decision.features.requires_database,
+                is_query=decision.features.is_query,
+                is_preview_request=decision.features.is_preview_request,
+                is_multi_step=decision.features.is_multi_step,
+                estimated_personas=decision.features.estimated_personas,
+                estimated_time_ms=decision.features.estimated_time_ms,
+                estimated_memory_mb=decision.features.estimated_memory_mb,
+                session_has_history=decision.features.session_has_history,
+                request_type=decision.features.request_type,
+            ),
+            confidence=decision.confidence,
+            request_id=decision.request_id,
+            session_id=decision.session_id,
+            timestamp=decision.timestamp,
+            decision_time_ms=decision.decision_time_ms,
+            was_overridden=decision.was_overridden,
+            override_source=decision.override_source,
+            original_locus=decision.original_locus.value if decision.original_locus else None,
+        )
+
+        # Log decision for telemetry
+        total_time = (time.time() - start_time) * 1000
+        logger.info(
+            f"Routing decision: locus={response.locus}, "
+            f"reason={response.reason_code}, "
+            f"confidence={response.confidence:.2f}, "
+            f"time={total_time:.2f}ms, "
+            f"request_id={response.request_id}"
+        )
+
+        return response
+
+    except Exception as e:
+        logger.error(f"Error evaluating routing policy: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error evaluating routing policy: {str(e)}"
+        )
 
 
 # ============================================================================
@@ -885,6 +1095,126 @@ async def read_deployment_file(path: str):
         logger.error(f"Error reading file: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
+# Register Gate Framework routes (EPIC-2)
+if HAS_GATE_SERVICE and gate_router:
+    app.include_router(gate_router)
+    logger.info("✅ Gate Framework routes registered at /api/gates")
+
+# Register Quality Fabric Enforcement routes (EPIC-4 / ME-400)
+try:
+    from api.quality_enforcement_routes import router as quality_enforcement_router
+    app.include_router(quality_enforcement_router)
+    logger.info("✅ Quality Fabric Enforcement routes registered at /api/quality")
+except ImportError as e:
+    logger.warning(f"Quality enforcement routes not available: {e}")
+
+# Register Template Validation routes (Epic MD-1822: Template Validation via Quality Fabric)
+try:
+    from api.template_validation_routes import router as template_validation_router
+    app.include_router(template_validation_router)
+    logger.info("✅ Template Validation routes registered at /api/templates")
+except ImportError as e:
+    logger.warning(f"Template validation routes not available: {e}")
+
+# Register Template Provenance routes (Epic MD-1824: Template Provenance & Citations)
+try:
+    from api.template_provenance_routes import router as template_provenance_router
+    app.include_router(template_provenance_router)
+    logger.info("✅ Template Provenance routes registered at /api/templates")
+except ImportError as e:
+    logger.warning(f"Template provenance routes not available: {e}")
+
+# Register JIRA Integration routes
+try:
+    from api.jira_integration_routes import router as jira_router
+    app.include_router(jira_router)
+    logger.info("✅ JIRA Integration routes registered at /api/jira")
+except ImportError as e:
+    logger.warning(f"JIRA integration routes not available: {e}")
+
+# Register E2E Dev & QA Agent routes
+try:
+    from api.e2e_agent_routes import router as e2e_agent_router
+    app.include_router(e2e_agent_router)
+    logger.info("✅ E2E Dev & QA Agent routes registered at /api/e2e-agent")
+except ImportError as e:
+    logger.warning(f"E2E agent routes not available: {e}")
+
+# Register Deployment Management routes (Epic MD-1790: Unified Deployment Management GUI)
+try:
+    from api.deployment_routes import router as deployment_router
+    app.include_router(deployment_router)
+    logger.info("✅ Deployment Management routes registered at /api/v1/deployments")
+
+    # Initialize deployment service and health monitor on startup
+    @app.on_event("startup")
+    async def init_deployment_services():
+        try:
+            from services.deployment_service import initialize_deployment_service
+            from services.deployment_health_monitor import get_deployment_health_monitor
+
+            # Initialize deployment service
+            service = await initialize_deployment_service()
+            logger.info("✅ Deployment service initialized")
+
+            # Initialize and start health monitor
+            monitor = get_deployment_health_monitor()
+            for env in await service.get_environments():
+                monitor.register_environment(
+                    env_id=env.id,
+                    name=env.name,
+                    health_url=env.health_url,
+                )
+
+            # Wire up WebSocket events
+            ws_manager = get_websocket_manager()
+
+            async def deployment_event_callback(event):
+                event_type = event.get("type", "")
+                data = event.get("data", {})
+
+                if event_type in ["deployment_started", "deployment_progress", "deployment_completed", "deployment_failed"]:
+                    await ws_manager.send_deployment_update(
+                        deployment_id=data.get("deployment_id", ""),
+                        status=data.get("status", "unknown"),
+                        environment_name=data.get("environment", ""),
+                        version=data.get("version", ""),
+                        message=data.get("message"),
+                        error_message=data.get("error"),
+                        github_run_url=data.get("github_run_url"),
+                    )
+                elif event_type == "health_status_changed":
+                    await ws_manager.send_health_update(
+                        environment_id=data.get("environment_id", ""),
+                        environment_name=data.get("environment_name", ""),
+                        status=data.get("current_status", "unknown"),
+                        response_time_ms=data.get("response_time_ms"),
+                        error_message=data.get("error_message"),
+                    )
+                elif event_type in ["rollback_started", "rollback_completed"]:
+                    await ws_manager.send_rollback_update(
+                        deployment_id=data.get("deployment_id", ""),
+                        original_deployment_id=data.get("original_deployment_id", ""),
+                        environment_name=data.get("environment", ""),
+                        version=data.get("version", ""),
+                        status=data.get("status", ""),
+                        triggered_by=data.get("triggered_by", ""),
+                    )
+
+            # Wire callback to services
+            service.event_callback = deployment_event_callback
+            monitor.event_callback = deployment_event_callback
+
+            # Start health monitoring in background
+            await monitor.start_monitoring()
+            logger.info("✅ Health monitoring started")
+
+        except Exception as e:
+            logger.warning(f"Deployment services initialization skipped: {e}")
+
+except ImportError as e:
+    logger.warning(f"Deployment management routes not available: {e}")
 
 # Mount Prometheus metrics endpoint if available
 if HAS_PROMETHEUS:

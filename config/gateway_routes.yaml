@@ -25,6 +25,30 @@ routes:
     requires_auth: false
     cache_ttl: 60  # Cache for 1 minute (read-heavy endpoint)
 
+  # AI Agents Service (Production Backend on port 3100)
+  # Note: Backend URL includes the path prefix since backend expects full path
+  - path: /api/v1/ai-agents*
+    backend: ${AUTH_SERVICE_URL:http://host.docker.internal:3100/api/v1/ai-agents}
+    rate_limit: 100/minute
+    requires_auth: false
+    cache_ttl: 0  # No caching for favorites operations
+
+  # Teams Service (Production Backend on port 3100)
+  # Note: Backend URL includes the path prefix since backend expects full path
+  - path: /api/teams*
+    backend: ${AUTH_SERVICE_URL:http://host.docker.internal:3100/api/teams}
+    rate_limit: 100/minute
+    requires_auth: false
+    cache_ttl: 60  # Cache for 1 minute (read-heavy endpoint)
+
+  # Missions Service (Production Backend on port 3100)
+  # Note: Backend URL includes the path prefix since backend expects full path
+  - path: /api/missions*
+    backend: ${AUTH_SERVICE_URL:http://host.docker.internal:3100/api/missions}
+    rate_limit: 100/minute
+    requires_auth: false
+    cache_ttl: 0  # No caching for real-time mission operations
+
   # Accelerator Mode BFF (Rapid Prototyping)
   - path: /api/v1/accelerator/*
     backend: ${BFF_SERVICE_URL:http://localhost:4001}
@@ -95,21 +119,140 @@ routes:
     requires_auth: false
     cache_ttl: 0
 
+  # Workflows API (non-versioned) - Routes /api/workflows/* to Backend (3100)
+  # Part of Frontend-Backend DAG Workflow Integration (MD-1649)
+  # Frontend dag-workflow-client.ts calls /api/workflows without /v1/ prefix
+  # IMPORTANT: Must be BEFORE /api/workflow/* to avoid route conflict
+  - path: /api/workflows*
+    backend: ${WORKFLOWS_SERVICE_URL:http://host.docker.internal:3100/api/v1/workflows}
+    rate_limit: 100/minute
+    requires_auth: false
+    cache_ttl: 0  # No caching for workflow operations
+
   # Async Workflow Execution (NEW - Workflow API Service)
+  # Note: /api/workflow/* (singular) routes to different service than /api/workflows*
   - path: /api/workflow/*
     backend: ${WORKFLOW_API_URL:http://host.docker.internal:5001}
     rate_limit: 50/minute
     requires_auth: false
     cache_ttl: 0
 
-  # Multi-Agent Collaboration (Collaboration BFF)
+  # Multi-Agent Collaboration (Production Backend)
+  # Note: Backend URL includes the path prefix since backend expects full path
   - path: /api/collaboration/*
-    backend: ${COLLABORATION_BFF_URL:http://host.docker.internal:4002}
+    backend: ${COLLABORATION_SERVICE_URL:http://host.docker.internal:3100/api/collaboration}
     rate_limit: 100/minute
     requires_auth: false
     cache_ttl: 0
 
+  # Persona Evolution Journey (Foundry) - Production Backend on port 3100
+  # Note: Backend URL includes the path prefix since backend expects full path
+  - path: /api/foundry/*
+    backend: ${FOUNDRY_SERVICE_URL:http://host.docker.internal:3100/api/foundry}
+    rate_limit: 100/minute
+    requires_auth: false
+    cache_ttl: 60  # Cache for 1 minute (read-heavy endpoint with interactions/traits)
+
+  # DAG Workflows (Orchestration) - Production Backend on port 3100
+  # Note: Backend URL includes the path prefix since backend expects full path
+  - path: /api/v1/dag-workflows*
+    backend: ${DAG_WORKFLOWS_SERVICE_URL:http://host.docker.internal:3100/api/v1/dag-workflows}
+    rate_limit: 100/minute
+    requires_auth: false
+    cache_ttl: 0  # No caching for workflow operations
+
+  # Workflow Execution Status - Routes /api/executions/* to Backend (3100)
+  # Part of Frontend-Backend DAG Workflow Integration (MD-1649)
+  # Frontend dag-workflow-client.ts calls /api/executions/:id for execution status
+  - path: /api/executions*
+    backend: ${EXECUTION_SERVICE_URL:http://host.docker.internal:3100/api/v1/execution-platform}
+    rate_limit: 100/minute
+    requires_auth: false
+    cache_ttl: 0  # No caching for execution status (real-time)
+
+  # Additional Backend Routes - Production Backend on port 3100
+  # Note: Backend URL includes the path prefix since backend expects full path
+  - path: /api/v1/workflows*
+    backend: ${AUTH_SERVICE_URL:http://host.docker.internal:3100/api/v1/workflows}
+    rate_limit: 100/minute
+    requires_auth: false
+    cache_ttl: 0
+
+  - path: /api/v1/phases*
+    backend: ${AUTH_SERVICE_URL:http://host.docker.internal:3100/api/v1/phases}
+    rate_limit: 100/minute
+    requires_auth: false
+    cache_ttl: 0
+
+  - path: /api/v1/tasks*
+    backend: ${AUTH_SERVICE_URL:http://host.docker.internal:3100/api/v1/tasks}
+    rate_limit: 100/minute
+    requires_auth: false
+    cache_ttl: 0
+
+  - path: /api/v1/artifacts*
+    backend: ${AUTH_SERVICE_URL:http://host.docker.internal:3100/api/v1/artifacts}
+    rate_limit: 100/minute
+    requires_auth: false
+    cache_ttl: 0
+
+  - path: /api/v1/artifact-sections*
+    backend: ${AUTH_SERVICE_URL:http://host.docker.internal:3100/api/v1/artifact-sections}
+    rate_limit: 100/minute
+    requires_auth: false
+    cache_ttl: 0
+
+  - path: /api/v1/checkpoints*
+    backend: ${AUTH_SERVICE_URL:http://host.docker.internal:3100/api/v1/checkpoints}
+    rate_limit: 100/minute
+    requires_auth: false
+    cache_ttl: 0
+
+  - path: /api/v1/approvals*
+    backend: ${AUTH_SERVICE_URL:http://host.docker.internal:3100/api/v1/approvals}
+    rate_limit: 100/minute
+    requires_auth: false
+    cache_ttl: 0
+
+  - path: /api/v1/chat*
+    backend: ${AUTH_SERVICE_URL:http://host.docker.internal:3100/api/v1/chat}
+    rate_limit: 100/minute
+    requires_auth: false
+    cache_ttl: 0
+
+  - path: /api/v1/files*
+    backend: ${AUTH_SERVICE_URL:http://host.docker.internal:3100/api/v1/files}
+    rate_limit: 100/minute
+    requires_auth: false
+    cache_ttl: 0
+
+  - path: /api/ai*
+    backend: ${AUTH_SERVICE_URL:http://host.docker.internal:3100/api/ai}
+    rate_limit: 100/minute
+    requires_auth: false
+    cache_ttl: 60
+
   # WebSocket routes (for real-time updates)
+
+  # Workflow-specific WebSocket for DAG execution real-time updates
+  # Part of Frontend-Backend DAG Workflow Integration (MD-1649)
+  # Frontend dag-workflow-client.ts connects to /ws/workflow/:id
+  - path: /ws/workflow/*
+    backend: ${AUTH_SERVICE_URL:http://host.docker.internal:3100}
+    rate_limit: 50/minute
+    requires_auth: false
+    cache_ttl: 0
+    websocket: true
+
+  # General WebSocket route for backend (missions, workflows, etc.)
+  # Must be after specific routes to allow more specific patterns to match first
+  - path: /ws*
+    backend: ${AUTH_SERVICE_URL:http://host.docker.internal:3100}
+    rate_limit: 50/minute
+    requires_auth: false
+    cache_ttl: 0
+    websocket: true
+
   - path: /ws/guardian/*
     backend: ${MAESTRO_ENGINE_URL:http://localhost:5000}
     rate_limit: 10/minute
@@ -135,6 +278,32 @@ routes:
     rate_limit: 10/minute
     requires_auth: false
     cache_ttl: 0
+
+  # =========================================
+  # Deployment Management (MD-1790)
+  # =========================================
+
+  # Portainer CE - Container Management GUI (Phase 1 Quick Win)
+  - path: /portainer*
+    backend: ${PORTAINER_URL:http://localhost:29000}
+    rate_limit: 100/minute
+    requires_auth: false
+    cache_ttl: 0
+
+  # Deployment Management API (Phase 2)
+  - path: /api/v1/deployments/*
+    backend: ${BFF_SERVICE_URL:http://localhost:4001}
+    rate_limit: 50/minute
+    requires_auth: false
+    cache_ttl: 0
+
+  # Deployment WebSocket for real-time updates
+  - path: /ws/deployments/*
+    backend: ${BFF_SERVICE_URL:http://localhost:4001}
+    rate_limit: 10/minute
+    requires_auth: false
+    cache_ttl: 0
+    websocket: true
 
 # CORS configuration
 cors:

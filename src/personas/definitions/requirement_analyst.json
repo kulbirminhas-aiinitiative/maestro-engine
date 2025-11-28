@@ -10,11 +10,12 @@
     "created_at": "2025-10-03",
     "updated_at": "2025-10-03",
     "category": "analysis_design",
-    "status": "active"
+    "status": "active",
+    "human_alias": "Stephen"
   },
 
   "role": {
-    "primary_role": "business_analyst",
+    "primary_role": "Business Analyst",
     "experience_level": 9,
     "autonomy_level": 8,
     "specializations": [

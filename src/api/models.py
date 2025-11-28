@@ -1,29 +1,98 @@
 #!/usr/bin/env python3
 """
 API Request/Response Models for MAESTRO Workflow API
+
+MD-1876: Phase 2 - Schema Hardening
+- Added max_length constraints to string fields
+- Added pattern validation for IDs
+- Added enum validation for status fields
 """
 
 from datetime import datetime
+from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+import re
+
+
+# MD-1876: Enum definitions for validated status fields
+class GateTypeEnum(str, Enum):
+    """Valid gate types."""
+    DDE = "DDE"  # Design Document Evaluation
+    BRV = "BRV"  # Business Rule Validation
+    ACC = "ACC"  # Acceptance Criteria Check
+
+
+class GateStatusEnum(str, Enum):
+    """Valid gate statuses."""
+    OPEN = "open"
+    PENDING = "pending"
+    PASSED = "passed"
+    FAILED = "failed"
+
+
+class PriorityEnum(str, Enum):
+    """Valid priority levels."""
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
 
 
 class WorkflowRequest(BaseModel):
     """Request model for workflow execution"""
 
-    requirement: str = Field(..., description="User requirement to execute", min_length=1)
+    # MD-1876: Added max_length=10000 for requirement field
+    requirement: str = Field(
+        ...,
+        description="User requirement to execute",
+        min_length=1,
+        max_length=10000
+    )
     enable_utcp: bool = Field(default=True, description="Enable distributed UTCP execution")
     enable_rag: bool = Field(default=True, description="Enable RAG template retrieval")
     enable_mcp: bool = Field(default=True, description="Enable MCP context sharing")
     selected_personas: Optional[List[str]] = Field(
         default=None, description="Optional custom persona list"
     )
-    session_id: Optional[str] = Field(default=None, description="Optional session ID for tracking")
-    project_path: Optional[str] = Field(default=None, description="Optional custom project path")
-    max_execution_time: Optional[int] = Field(
-        default=3600, description="Max execution time in seconds"
+    # MD-1876: Added max_length=200 for session_id
+    session_id: Optional[str] = Field(
+        default=None,
+        description="Optional session ID for tracking",
+        max_length=200
     )
+    # MD-1876: Added max_length=500 for project_path
+    project_path: Optional[str] = Field(
+        default=None,
+        description="Optional custom project path",
+        max_length=500
+    )
+    max_execution_time: Optional[int] = Field(
+        default=3600,
+        description="Max execution time in seconds",
+        ge=1,
+        le=86400  # Max 24 hours
+    )
+
+    # MD-1876: Validator for session_id pattern
+    @field_validator('session_id')
+    @classmethod
+    def validate_session_id(cls, v):
+        if v is not None and not re.match(r'^[a-zA-Z0-9_-]+$', v):
+            raise ValueError('session_id must contain only alphanumeric characters, underscores, and hyphens')
+        return v
+
+    # MD-1876: Validator for project_path pattern
+    @field_validator('project_path')
+    @classmethod
+    def validate_project_path(cls, v):
+        if v is not None:
+            # Check for path traversal attempts
+            if '..' in v:
+                raise ValueError('project_path cannot contain path traversal sequences')
+            if not re.match(r'^[a-zA-Z0-9._/-]*$', v):
+                raise ValueError('project_path contains invalid characters')
+        return v
 
     class Config:
         json_schema_extra = {
@@ -125,26 +194,69 @@ class StatusResponse(BaseModel):
     rag_enabled: bool = Field(..., description="Whether RAG is enabled")
 
 
+# MD-1876: Enum for render types
+class RenderTypeEnum(str, Enum):
+    """Valid render types for SDLC documents."""
+    MARKDOWN = "markdown"
+    MERMAID = "mermaid"
+    OPENAPI = "openapi"
+    USER_JOURNEY = "user-journey"
+    C4_DIAGRAM = "c4-diagram"
+    RAW = "raw"
+
+
 class SDLCDocument(BaseModel):
     """SDLC Document for frontend rendering"""
 
-    id: str = Field(..., description="Unique document ID")
-    title: str = Field(..., description="Document title")
+    # MD-1876: Added max_length=100 for ID field
+    id: str = Field(
+        ...,
+        description="Unique document ID",
+        max_length=100
+    )
+    # MD-1876: Added max_length=200 for title
+    title: str = Field(
+        ...,
+        description="Document title",
+        max_length=200
+    )
     renderType: str = Field(
         ...,
         description="Visualization type: markdown, mermaid, openapi, user-journey, c4-diagram, raw",
     )
-    rawContent: str = Field(..., description="Document content in appropriate format")
+    # MD-1876: Added max_length=100000 for content
+    rawContent: str = Field(
+        ...,
+        description="Document content in appropriate format",
+        max_length=100000
+    )
     generatedAt: str = Field(..., description="ISO 8601 timestamp")
 
-    # Optional fields
-    phase: Optional[str] = Field(None, description="SDLC phase")
-    version: str = Field(default="1.0", description="Document version")
-    generatedBy: Optional[str] = Field(None, description="Agent/persona that generated this")
-    artifactType: Optional[str] = Field(None, description="Type of artifact")
-    description: Optional[str] = Field(None, description="Document description")
-    size: Optional[int] = Field(None, description="File size in bytes")
-    filePath: Optional[str] = Field(None, description="Original file path")
+    # Optional fields with constraints
+    phase: Optional[str] = Field(None, description="SDLC phase", max_length=50)
+    version: str = Field(default="1.0", description="Document version", max_length=20)
+    generatedBy: Optional[str] = Field(None, description="Agent/persona that generated this", max_length=100)
+    artifactType: Optional[str] = Field(None, description="Type of artifact", max_length=50)
+    description: Optional[str] = Field(None, description="Document description", max_length=5000)
+    size: Optional[int] = Field(None, description="File size in bytes", ge=0)
+    filePath: Optional[str] = Field(None, description="Original file path", max_length=500)
+
+    # MD-1876: Validator for ID pattern
+    @field_validator('id')
+    @classmethod
+    def validate_id(cls, v):
+        if not re.match(r'^[a-zA-Z0-9_-]+$', v):
+            raise ValueError('id must contain only alphanumeric characters, underscores, and hyphens')
+        return v
+
+    # MD-1876: Validator for filePath
+    @field_validator('filePath')
+    @classmethod
+    def validate_file_path(cls, v):
+        if v is not None:
+            if '..' in v:
+                raise ValueError('filePath cannot contain path traversal sequences')
+        return v
 
     class Config:
         json_schema_extra = {

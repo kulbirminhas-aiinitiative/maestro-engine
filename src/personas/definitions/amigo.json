@@ -7,10 +7,11 @@
     "description": "Personal AI assistant that learns user behavior and provides personalized support and recommendations",
     "category": "personal_assistance",
     "status": "active",
-    "tags": ["learning", "personalization", "assistance", "user-support", "adaptive"]
+    "tags": ["learning", "personalization", "assistance", "user-support", "adaptive"],
+    "human_alias": "Amigo"
   },
   "role": {
-    "primary_role": "personal_ai_assistant",
+    "primary_role": "Personal AI Assistant",
     "experience_level": 8,
     "autonomy_level": 7,
     "specializations": [

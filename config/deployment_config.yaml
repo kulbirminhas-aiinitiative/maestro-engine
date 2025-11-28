@@ -1,0 +1,203 @@
+# ============================================================================
+# Deployment Management Configuration
+# Epic: MD-1790 [Platform] Unified Deployment Management GUI
+# ============================================================================
+#
+# This configuration file controls the deployment management system:
+# - Environment definitions
+# - GitHub Actions integration
+# - Health monitoring settings
+# - Portainer integration
+#
+# Environment variables can be used: ${VAR_NAME:default_value}
+# ============================================================================
+
+# GitHub Actions Integration
+github:
+  # GitHub Personal Access Token (requires repo and workflow scopes)
+  token_env: GITHUB_TOKEN
+
+  # Repository to trigger deployments
+  repository: ${GITHUB_REPOSITORY:fifth9/maestro-platform}
+
+  # Workflow file to trigger
+  workflow_id: deploy.yml
+
+  # Default branch for deployments
+  default_ref: main
+
+  # API configuration
+  api_base_url: https://api.github.com
+  timeout_seconds: 30
+  max_retries: 3
+
+  # Polling configuration for workflow status
+  poll_interval_seconds: 10
+  poll_timeout_seconds: 600  # 10 minutes max wait
+
+# Environment Definitions
+environments:
+  - name: beta
+    display_name: "Beta Environment"
+    description: "Development and testing environment for new features"
+    github_environment: development
+    health_url: ${BETA_HEALTH_URL:http://localhost:4001/health}
+    portainer_stack: maestro-beta
+    is_production: false
+    requires_approval: false
+    deploy_timeout_seconds: 300
+
+  - name: demo
+    display_name: "Demo Environment"
+    description: "Staging environment for demos and pre-production testing"
+    github_environment: staging
+    health_url: ${DEMO_HEALTH_URL:http://localhost:4001/health}
+    portainer_stack: maestro-demo
+    is_production: false
+    requires_approval: false
+    deploy_timeout_seconds: 300
+
+  - name: production
+    display_name: "Production"
+    description: "Live production environment"
+    github_environment: production
+    health_url: ${PROD_HEALTH_URL:https://maestro.ai/health}
+    portainer_stack: maestro-production
+    is_production: true
+    requires_approval: true
+    deploy_timeout_seconds: 600
+
+# Health Monitoring Configuration
+health_monitor:
+  # How often to check environment health
+  interval_seconds: 30
+
+  # Timeout for health check requests
+  timeout_seconds: 10
+
+  # Number of consecutive failures before marking unhealthy
+  unhealthy_threshold: 3
+
+  # Number of consecutive successes before marking healthy
+  healthy_threshold: 2
+
+  # How long to keep health snapshots (for trending)
+  snapshot_retention_days: 7
+
+  # Expected health response format
+  expected_status_codes:
+    - 200
+    - 204
+
+  # MD-1861: Health Endpoint Retry Configuration
+  # Maximum retry attempts for transient failures
+  max_retries: 3
+
+  # Initial delay between retries (seconds)
+  retry_delay_seconds: 1.0
+
+  # Exponential backoff multiplier for retries
+  # e.g., 2.0 means delays of 1s, 2s, 4s for 3 retries
+  retry_backoff_multiplier: 2.0
+
+# Portainer Integration (Phase 1)
+portainer:
+  # Portainer API URL
+  url: ${PORTAINER_URL:http://localhost:29000}
+
+  # Admin credentials (set via environment)
+  username_env: PORTAINER_ADMIN_USER
+  password_env: PORTAINER_ADMIN_PASSWORD
+
+  # API configuration
+  api_version: 2
+  timeout_seconds: 30
+
+  # Enable/disable Portainer integration
+  enabled: true
+
+# Deployment Settings
+deployment:
+  # Maximum concurrent deployments per environment
+  max_concurrent_per_env: 1
+
+  # Cooldown period between deployments to same environment (seconds)
+  cooldown_seconds: 60
+
+  # Auto-rollback on failure
+  auto_rollback_enabled: true
+
+  # How long to keep deployment history
+  history_retention_days: 90
+
+  # Maximum log entries per deployment
+  max_log_entries: 1000
+
+# Version Management
+versions:
+  # How to discover available versions
+  source: github_releases  # github_releases, github_tags, docker_hub
+
+  # Include pre-releases
+  include_prereleases: false
+
+  # Maximum versions to display
+  max_display_count: 20
+
+# WebSocket Configuration
+websocket:
+  # Event types to broadcast
+  events:
+    - deployment_started
+    - deployment_progress
+    - deployment_completed
+    - deployment_failed
+    - deployment_cancelled
+    - health_status_changed
+    - rollback_started
+    - rollback_completed
+
+  # Heartbeat interval
+  heartbeat_seconds: 30
+
+# Notification Settings (Future: Slack, Email, etc.)
+notifications:
+  enabled: false
+  # slack:
+  #   webhook_url_env: SLACK_WEBHOOK_URL
+  #   channel: "#deployments"
+  # email:
+  #   smtp_host: ${SMTP_HOST:localhost}
+  #   smtp_port: ${SMTP_PORT:587}
+  #   from_address: deployments@maestro.ai
+
+# Logging Configuration
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+  # Log deployment events to file
+  file_enabled: true
+  file_path: logs/deployments.log
+  max_file_size_mb: 50
+  backup_count: 5
+
+# Security Settings
+security:
+  # Require authentication for deployment operations
+  require_auth: false  # Set to true when auth is implemented
+
+  # Roles allowed to deploy
+  deploy_roles:
+    - admin
+    - deployer
+
+  # Roles allowed to rollback
+  rollback_roles:
+    - admin
+    - deployer
+
+  # Roles allowed to approve production deployments
+  approval_roles:
+    - admin
+    - lead

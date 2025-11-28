@@ -10,11 +10,12 @@
     "created_at": "2025-10-03",
     "updated_at": "2025-10-03",
     "category": "development",
-    "status": "active"
+    "status": "active",
+    "human_alias": "Emma"
   },
 
   "role": {
-    "primary_role": "frontend_developer",
+    "primary_role": "Frontend Developer",
     "experience_level": 8,
     "autonomy_level": 8,
     "specializations": [

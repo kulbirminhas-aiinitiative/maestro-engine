@@ -1,0 +1,452 @@
+Summary,Issue Type,Description,Priority,Labels,Story Points,Epic Link,Components,Target Start,Target End,Acceptance Criteria
+"ML Routing Policy Service",Epic,"Implement a policy service that decides and explains where a request runs (Frontend/BFF quick-run vs Backend long-run) using policy rules + ML signals, enabling resource optimization and faster perceived latency for lightweight tasks.
+
+**Problem Statement:**
+- AutonomousSDLCEngineV3Resumable uses hardcoded priority_tiers dictionary
+- No dynamic assessment of task complexity
+- All tasks flow to backend regardless of size
+- Backend capacity wasted on trivial tasks
+
+**Business Value:**
+- 50-70% faster response for lightweight tasks
+- 10-20% backend queue reduction
+- Instant feedback for simple queries
+
+**Scope:**
+- Policy endpoint in BFF (POST /api/policy/route)
+- Feature extraction (task complexity, token count, resource needs)
+- Decision logging with reason codes
+- Override header (X-Route-Locus)
+- Feature flag: FF_ML_ROUTING_ENABLED",Highest,"maestro-v3,routing,ml,p0,wave-1",13,,bff|orchestration|telemetry,Week 3,Week 5,"AC-1: POST /api/policy/route returns {locus: fe|backend, reason_code, features}
+AC-2: Response latency <50ms p50, <150ms p95
+AC-3: Decisions logged with request_id and session_id
+AC-4: WebSocket event ws:routing:decision emitted
+AC-5: Override header X-Route-Locus respected and audited
+AC-6: Feature flag FF_ML_ROUTING_ENABLED controls activation
+AC-7: Fallback to backend on any error"
+"Create policy_service.py with feature extraction",Story,"Create the core policy service module with feature extraction capabilities for routing decisions.
+
+- Extract token_count, complexity score, resource requirements
+- Implement feature normalization
+- Add caching for repeated requests",High,"maestro-v3,routing,ml",3,ME-100,bff,Week 3,Week 3,
+"Implement heuristic routing rules",Story,"Implement rule-based routing as baseline before ML model.
+
+- Define complexity thresholds
+- Map task types to recommended locus
+- Add configurable rule weights",High,"maestro-v3,routing,ml",3,ME-100,bff,Week 3,Week 4,
+"Add telemetry logging schema",Story,"Create telemetry schema for ML training data collection.
+
+- Define telemetry event schema
+- Log all routing decisions with features
+- Enable future ML model training",High,"maestro-v3,routing,telemetry",2,ME-100,telemetry,Week 4,Week 4,
+"BFF endpoint integration",Story,"Integrate policy service into BFF routing layer.
+
+- Create POST /api/policy/route endpoint
+- Add authentication/authorization
+- Implement rate limiting",High,"maestro-v3,routing,api",2,ME-100,bff,Week 4,Week 5,
+"WebSocket event emission",Story,"Emit routing decisions via WebSocket for real-time UI updates.
+
+- Define ws:routing:decision event schema
+- Broadcast to relevant subscribers
+- Include reason codes and features",Medium,"maestro-v3,routing,websocket",1,ME-100,orchestration,Week 5,Week 5,
+"Override header handling",Story,"Implement X-Route-Locus header for manual routing override.
+
+- Parse override header
+- Validate override permissions
+- Log overrides in audit trail",Medium,"maestro-v3,routing,audit",1,ME-100,bff,Week 5,Week 5,
+"Prometheus metrics integration",Story,"Add Prometheus metrics for routing decision monitoring.
+
+- Decision latency histogram
+- Locus distribution counter
+- Override rate gauge",Low,"maestro-v3,routing,metrics",1,ME-100,telemetry,Week 5,Week 5,
+"Gate Framework (DDE/BRV/ACC)",Epic,"Introduce Design Decision Evidence (DDE), Business Review (BRV), and Acceptance Criteria (ACC) gates per phase with enforcement hooks, storage, audit trails, and real-time WebSocket updates.
+
+**Problem Statement:**
+- WorkflowEngine implements standard DAG with depends_on relationships
+- No Gate construct exists as a distinct architectural element
+- Quality control is implicit rather than explicit
+- No hard stops or manual approval steps enforced
+
+**Business Value:**
+- 25-40% fewer rework iterations
+- Consistent quality checkpoints
+- Full audit trail for compliance
+- Early detection of issues
+
+**Gate Types:**
+- DDE (Design Decision Evidence): Validate architectural decisions
+- BRV (Business Review Validation): Confirm business requirements met
+- ACC (Acceptance Criteria Complete): Verify all ACs satisfied
+
+**Feature Flag:** FF_GATES_ENFORCEMENT_ENABLED",Highest,"maestro-v3,gates,quality,p0,wave-1",21,,orchestration|workflow|api|ui,Week 3,Week 7,"AC-1: Gates computed and stored per phase with status open/pending/passed/failed
+AC-2: Evidence URIs attachable to gates
+AC-3: Mixed-mode execution halts on failed mandatory gate unless override
+AC-4: Override requires explicit X-Gate-Override header with audit
+AC-5: WebSocket ws:gate:update broadcasts state changes
+AC-6: Dry-run mode computes gates without blocking
+AC-7: Audit trail persists all gate decisions
+AC-8: Per-template gate checklists configurable"
+"Define gate contracts (DDE, BRV, ACC)",Story,"Create formal contract definitions for each gate type.
+
+- JSON Schema for gate contracts
+- Define required vs optional evidence types
+- Document enforcement levels per environment",High,"maestro-v3,gates,contracts",2,ME-200,orchestration,Week 3,Week 3,
+"Implement gate storage schema",Story,"Design and implement database schema for gate persistence.
+
+- Gate entity with status, evidence, timestamps
+- Audit log table for all state changes
+- Efficient queries for workflow status",High,"maestro-v3,gates,database",3,ME-200,orchestration,Week 3,Week 4,
+"Create gate management APIs",Story,"Build REST APIs for gate operations.
+
+- GET /api/gates?session_id={id}&phase={name}
+- POST /api/gates/{id}/approve
+- POST /api/gates/{id}/reject
+- Add evidence attachment endpoint",High,"maestro-v3,gates,api",3,ME-200,api,Week 4,Week 5,
+"Integrate gates into workflow engine",Story,"Modify WorkflowEngine to check gates before phase execution.
+
+- Add gate check hook before phase start
+- Implement blocking behavior for failed gates
+- Support mandatory vs advisory gates",High,"maestro-v3,gates,workflow",5,ME-200,workflow,Week 5,Week 6,
+"Add WebSocket gate events",Story,"Implement real-time gate status notifications.
+
+- Define ws:gate:update event schema
+- Broadcast on gate state changes
+- Include evidence summaries",Medium,"maestro-v3,gates,websocket",2,ME-200,orchestration,Week 6,Week 6,
+"Implement dry-run mode",Story,"Allow gate computation without blocking execution.
+
+- Add dry_run configuration option
+- Log would-be blocks without stopping
+- Enable A/B testing of gate rules",Medium,"maestro-v3,gates,testing",2,ME-200,orchestration,Week 6,Week 7,
+"Create per-template gate checklists",Story,"Define default gate checklists per workflow template.
+
+- Create checklist configuration format
+- Map templates to required gates
+- Support template inheritance",Medium,"maestro-v3,gates,templates",2,ME-200,workflow,Week 7,Week 7,
+"Add audit trail persistence",Story,"Ensure complete audit trail for all gate operations.
+
+- Log all state transitions
+- Record approver identity and timestamp
+- Support compliance reporting queries",High,"maestro-v3,gates,audit",2,ME-200,orchestration,Week 7,Week 7,
+"Success Scoring Service",Epic,"Compute normalized scores per phase/persona/team with reasons and gaps, publishing to status APIs and WebSocket for visibility, trend analysis, and automated improvement triggers.
+
+**Problem Statement:**
+- Only file counts and execution time tracked
+- No quality-based scoring
+- No per-persona or per-team metrics
+- Quality Score is a vanity metric
+
+**Current Evidence:**
+quality_score = min(100, (file_count * 10) + (50 if execution_time < 60 else 0))
+# A run generating 100 garbage files gets score 100
+
+**Score Dimensions:**
+- Quality (40%): Test coverage, static analysis, code review
+- Completion (30%): ACs met, gates passed, artifacts
+- Efficiency (30%): Time vs estimate, resource usage, rework cycles
+
+**Feature Flag:** FF_SUCCESS_SCORING_ENABLED",Highest,"maestro-v3,scoring,metrics,p0,wave-1",13,,scoring|api|websocket,Week 5,Week 7,"AC-1: Scores available in /api/workflow/status response
+AC-2: WebSocket ws:score:update emits on score changes
+AC-3: Scores include reasons array and gaps array
+AC-4: Scores persisted with session_id, persona, phase
+AC-5: Configurable weights with default template
+AC-6: Historical scores queryable for trend charts
+AC-7: Scores embedded in workflow manifest"
+"Define score model and weights",Story,"Design the multi-dimensional scoring model.
+
+- Define Quality, Completion, Efficiency dimensions
+- Set default weights (40/30/30)
+- Document scoring algorithms",High,"maestro-v3,scoring,model",2,ME-300,scoring,Week 5,Week 5,
+"Implement scoring_service.py",Story,"Create the core scoring service module.
+
+- Compute scores per phase/persona/team
+- Generate reason codes for low scores
+- Identify gaps and improvement suggestions",High,"maestro-v3,scoring,service",3,ME-300,scoring,Week 5,Week 6,
+"Create score persistence layer",Story,"Implement database storage for scores.
+
+- Score entity with all dimensions
+- Historical tracking for trends
+- Efficient aggregation queries",High,"maestro-v3,scoring,database",2,ME-300,scoring,Week 6,Week 6,
+"Add score to workflow status API",Story,"Expose scores in workflow status responses.
+
+- Add scores to GET /api/workflow/status
+- Include phase, persona, team breakdowns
+- Add reasons and gaps arrays",High,"maestro-v3,scoring,api",2,ME-300,api,Week 6,Week 7,
+"Implement WebSocket score events",Story,"Broadcast score updates via WebSocket.
+
+- Define ws:score:update event schema
+- Emit on score computation
+- Include delta from previous score",Medium,"maestro-v3,scoring,websocket",2,ME-300,websocket,Week 7,Week 7,
+"Create score trend query API",Story,"Build API for historical score analysis.
+
+- GET /api/scores/trends?session_id={id}
+- Support time-range filtering
+- Return trend data for charts",Low,"maestro-v3,scoring,analytics",2,ME-300,api,Week 7,Week 7,
+"Quality Fabric Enforcement",Epic,"Map phases to test scenarios, enforce test results as gate inputs, and enable Quality Fabric integration by default in staging/production environments.
+
+**Problem Statement:**
+- QualityFabricClient exists but is NEVER called in execution loop
+- Integration is optional and disabled by default
+- No phase-to-test mapping
+- Tests don't block gates
+
+**Business Value:**
+- 25% fewer post-integration defects
+- Early defect detection
+- Consistent quality standards
+
+**Feature Flag:** FF_QUALITY_FABRIC_ENFORCEMENT",High,"maestro-v3,quality,testing,p1,wave-2",13,,quality|gates|testing,Week 8,Week 10,"AC-1: Each phase has at least one mapped test scenario
+AC-2: Test results tie to gates as evidence
+AC-3: Failing tests block gate unless waiver present
+AC-4: Configurable thresholds (coverage, static analysis)
+AC-5: Quality Fabric enabled by default in staging/prod
+AC-6: Test artifacts linked to run manifest"
+"Create phase-to-test mapping configuration",Story,"Define configuration format for mapping phases to tests.
+
+- YAML/JSON configuration schema
+- Support multiple tests per phase
+- Define threshold requirements",High,"maestro-v3,quality,config",2,ME-400,quality,Week 8,Week 8,
+"Integrate QualityFabricClient into execution loop",Story,"Wire QualityFabricClient into the main execution flow.
+
+- Import and initialize client
+- Call quality checks at phase boundaries
+- Handle async test execution",High,"maestro-v3,quality,integration",3,ME-400,quality,Week 8,Week 9,
+"Wire test results to gate evidence",Story,"Connect test outcomes to gate evidence system.
+
+- Convert test results to evidence format
+- Attach to appropriate gates
+- Support partial pass/fail",High,"maestro-v3,quality,gates",3,ME-400,gates,Week 9,Week 9,
+"Implement threshold configuration",Story,"Add configurable quality thresholds.
+
+- Coverage percentage thresholds
+- Static analysis score minimums
+- Per-environment threshold overrides",Medium,"maestro-v3,quality,config",2,ME-400,quality,Week 9,Week 10,
+"Add waiver mechanism for blocked tests",Story,"Allow authorized waivers for test failures.
+
+- Waiver request/approval workflow
+- Time-limited waivers
+- Audit trail for all waivers",Medium,"maestro-v3,quality,waivers",2,ME-400,quality,Week 10,Week 10,
+"Enable by default in non-dev environments",Story,"Configure Quality Fabric to be enabled by default.
+
+- Update environment configurations
+- Set staging/prod defaults
+- Document override procedures",Low,"maestro-v3,quality,config",1,ME-400,quality,Week 10,Week 10,
+"Learning Snapshot & RAG Ingestion",Epic,"Generate post-run learning snapshots and ingest with provenance into RAG, enabling the system to actively learn from past executions and improve future runs.
+
+**Problem Statement:**
+- RAG indexes execution results (write-only)
+- No feedback loop where engine queries learnings
+- No structured learning artifact
+- System accumulates data but doesn't get smarter
+
+**Current Evidence:**
+await rag.index_workflow_execution(results)
+# But no query for specific learnings in current/next run
+
+**Business Value:**
+- 15% improvement in suggestion accuracy
+- Reduced time-to-first-correct-template
+- Knowledge preservation across runs
+
+**Feature Flag:** FF_LEARNING_SNAPSHOT_ENABLED",High,"maestro-v3,learning,rag,p1,wave-2",8,,learning|rag|artifacts,Week 10,Week 12,"AC-1: Snapshot JSON/MD produced per run
+AC-2: Snapshot covers decisions, scores, defects, templates
+AC-3: Ingestion writes embeddings with metadata
+AC-4: Metadata includes session_id, persona, phase, version
+AC-5: RAG retrieval shows citations in agent outputs
+AC-6: Provenance tracking with source trust tiers"
+"Define learning snapshot schema",Story,"Create schema for post-run learning artifacts.
+
+- JSON Schema definition
+- Include decisions, scores, defects, templates
+- Support versioning for schema evolution",High,"maestro-v3,learning,schema",2,ME-500,learning,Week 10,Week 10,
+"Implement snapshot generator",Story,"Build module to generate learning snapshots.
+
+- Collect data from run completion
+- Format according to schema
+- Store as run artifact",High,"maestro-v3,learning,generator",2,ME-500,learning,Week 10,Week 11,
+"Create RAG ingestion pipeline",Story,"Implement automated ingestion into vector store.
+
+- Vectorize snapshot content
+- Store with metadata (session_id, persona, phase)
+- Support incremental updates",High,"maestro-v3,learning,rag",2,ME-500,rag,Week 11,Week 11,
+"Add citation support to agent outputs",Story,"Enable agents to cite RAG sources in responses.
+
+- Query RAG for relevant learnings
+- Format citations in output
+- Track citation usage metrics",Medium,"maestro-v3,learning,citations",2,ME-500,rag,Week 11,Week 12,
+"Template Promotion Pipeline",Epic,"Automate promotion of high-quality workflow outputs to the template registry with criteria validation, governance approvals, and semantic versioning.
+
+**Problem Statement:**
+- WorkflowTemplateExtractor copies files with manifest
+- No intelligent generalization (hardcoded values remain)
+- No promotion criteria or governance
+- No versioning
+
+**Business Value:**
+- Codifies best practices
+- Scales quality across organization
+- 25% of runs use promoted templates within 90 days
+
+**Feature Flag:** FF_TEMPLATE_PROMOTION_ENABLED",High,"maestro-v3,templates,governance,p1,wave-2",13,,templates|governance|api,Week 11,Week 13,"AC-1: Promotion requests validate criteria (score thresholds, test pass)
+AC-2: Approval workflow with designated approvers
+AC-3: Templates published with semver and changelog
+AC-4: Auto-suggestion prefers promoted templates
+AC-5: Intelligent generalization removes hardcoded values"
+"Define promotion criteria configuration",Story,"Create configuration for promotion eligibility.
+
+- Score threshold requirements
+- Test pass requirements
+- Minimum usage count",High,"maestro-v3,templates,criteria",2,ME-600,templates,Week 11,Week 11,
+"Implement promotion API endpoint",Story,"Build POST /api/templates/promote endpoint.
+
+- Validate promotion criteria
+- Create promotion request record
+- Trigger approval workflow",High,"maestro-v3,templates,api",3,ME-600,api,Week 11,Week 12,
+"Add approval workflow",Story,"Implement multi-step approval process.
+
+- Define approver roles
+- Send approval notifications
+- Track approval status",High,"maestro-v3,templates,governance",3,ME-600,governance,Week 12,Week 12,
+"Implement semantic versioning",Story,"Add semver support to template registry.
+
+- Version bump logic (major/minor/patch)
+- Changelog generation
+- Version compatibility tracking",Medium,"maestro-v3,templates,versioning",2,ME-600,templates,Week 12,Week 13,
+"Create intelligent generalization logic",Story,"Implement smart template generalization.
+
+- Identify hardcoded values
+- Replace with parameterized placeholders
+- Validate generalized template",Medium,"maestro-v3,templates,generalization",3,ME-600,templates,Week 13,Week 13,
+"Deployment Verification Gates",Epic,"Post-deployment smoke tests, health checks, and rollback rules integrated as enforceable gates.
+
+**Business Value:**
+- 40% fewer failed post-deploy incidents
+- Faster recovery from issues
+- Automated rollback triggers
+
+**Scope:**
+- Define deployment check runners
+- Integrate with gate framework
+- Implement rollback criteria",Medium,"maestro-v3,deployment,verification,p2,wave-3",8,,deployment|gates|devops,Week 13,Week 15,"AC-1: Deploy phase emits verification results
+AC-2: Failure triggers rollback guideline
+AC-3: Gate passes only when checks succeed within SLO windows
+AC-4: Evidence stored and visible in status/WS"
+"Define deployment check runners",Story,"Create health check and smoke test runners.
+
+- HTTP endpoint checks
+- Service dependency validation
+- Performance baseline validation",High,"maestro-v3,deployment,checks",2,ME-700,deployment,Week 13,Week 13,
+"Integrate checks into gate framework",Story,"Wire deployment checks to gate system.
+
+- Create deployment gate type
+- Map checks to gate evidence
+- Configure blocking behavior",High,"maestro-v3,deployment,gates",3,ME-700,gates,Week 13,Week 14,
+"Implement rollback criteria",Story,"Define automated rollback triggers.
+
+- Failure threshold configuration
+- Rollback action definitions
+- Notification integration",Medium,"maestro-v3,deployment,rollback",2,ME-700,deployment,Week 14,Week 15,
+"Add evidence persistence",Story,"Store deployment verification results.
+
+- Verification result schema
+- Link to run artifacts
+- Support historical queries",Low,"maestro-v3,deployment,evidence",1,ME-700,deployment,Week 15,Week 15,
+"Team Enhancement Rationale",Epic,"Capture why backend adds personas with rationale, allow user lock/override with full audit trail.
+
+**Business Value:**
+- Transparency in team composition
+- User control over enhancements
+- 20% improvement in trust metrics
+
+**Scope:**
+- team_enhancement_report artifact
+- Team lock flag
+- Audit trail for overrides",Medium,"maestro-v3,team,transparency,p2,wave-3",5,,team|audit|ui,Week 14,Week 15,"AC-1: Persona additions include rationale and confidence
+AC-2: Users can lock base team; backend respects lock
+AC-3: Audit logs include before/after diffs"
+"Create team_enhancement_report artifact",Story,"Generate report explaining team composition changes.
+
+- Rationale for each added persona
+- Confidence scores
+- Alternative suggestions considered",High,"maestro-v3,team,artifact",2,ME-800,team,Week 14,Week 14,
+"Implement team lock flag",Story,"Allow users to prevent automatic team enhancement.
+
+- Lock flag in team configuration
+- Backend enforcement
+- UI toggle component",Medium,"maestro-v3,team,lock",1,ME-800,team,Week 14,Week 15,
+"Add audit trail for overrides",Story,"Track all team composition changes.
+
+- Before/after diffs
+- Override reason recording
+- Queryable audit history",Medium,"maestro-v3,team,audit",1,ME-800,audit,Week 15,Week 15,
+"UI badge for enhanced teams",Story,"Visual indicator for backend-enhanced teams.
+
+- Badge component
+- Tooltip with enhancement summary
+- Link to full report",Low,"maestro-v3,team,ui",1,ME-800,ui,Week 15,Week 15,
+"Requirement Schema Contract",Epic,"Versioned requirement schema shared across FE/BFF/BE with validators and CI checks.
+
+**Business Value:**
+- 50% fewer schema-related defects
+- Clear contracts across services
+- Automated compatibility validation
+
+**Scope:**
+- Versioned schema definitions
+- Validators for each service
+- CI compatibility checks",Medium,"maestro-v3,schema,contract,p2,wave-3",5,,schema|validation|ci,Week 14,Week 15,"AC-1: Schemas versioned; incompatible changes blocked without migration notes
+AC-2: Validation errors returned with actionable messages
+AC-3: Contract doc published; examples covered by tests"
+"Define versioned schema",Story,"Create versioned JSON Schema for requirements.
+
+- Version numbering scheme
+- Breaking change detection
+- Migration guide template",High,"maestro-v3,schema,versioning",2,ME-900,schema,Week 14,Week 14,
+"Implement validators",Story,"Build validators for FE/BFF/BE services.
+
+- Schema validation library integration
+- Error message formatting
+- Partial validation support",High,"maestro-v3,schema,validation",1,ME-900,validation,Week 14,Week 15,
+"Add CI compatibility check",Story,"Automated schema compatibility in CI pipeline.
+
+- Pre-merge validation
+- Breaking change alerts
+- Version bump enforcement",Medium,"maestro-v3,schema,ci",1,ME-900,ci,Week 15,Week 15,
+"Create documentation",Story,"Document schema contract and usage.
+
+- Schema reference documentation
+- Usage examples
+- Migration guides",Low,"maestro-v3,schema,docs",1,ME-900,schema,Week 15,Week 15,
+"SLOs, Queue Policies & Observability",Epic,"Define job classes, priorities, retries, SLAs with dashboards and alerts.
+
+**Business Value:**
+- 95% SLO attainment
+- Predictable job processing
+- Early warning on issues
+
+**Scope:**
+- Job class definitions
+- Queue configuration
+- Grafana dashboards
+- Alert rules with runbooks",Medium,"maestro-v3,slo,observability,p2,wave-3",8,,slo|queue|monitoring,Week 15,Week 16,"AC-1: Job classes documented and enforced via config
+AC-2: Dashboards show p50/p95/p99 latencies and success rates by class
+AC-3: Alerts on SLO breaches with runbook links"
+"Define job classes and policies",Story,"Create job classification system.
+
+- Job class definitions (critical, standard, batch)
+- Priority rules
+- Retry policies per class",High,"maestro-v3,slo,policies",2,ME-1000,slo,Week 15,Week 15,
+"Implement queue configuration",Story,"Configure queue systems for job classes.
+
+- Celery queue per class
+- Priority routing
+- Resource limits",High,"maestro-v3,slo,queue",2,ME-1000,queue,Week 15,Week 16,
+"Create Grafana dashboards",Story,"Build observability dashboards.
+
+- Latency histograms (p50/p95/p99)
+- Success/failure rates
+- Queue depth monitoring",Medium,"maestro-v3,slo,dashboards",2,ME-1000,monitoring,Week 16,Week 16,
+"Configure alerts with runbook links",Story,"Set up alerting for SLO breaches.
+
+- Alert rules for key metrics
+- Severity levels
+- Runbook links in notifications",Medium,"maestro-v3,slo,alerts",2,ME-1000,monitoring,Week 16,Week 16,

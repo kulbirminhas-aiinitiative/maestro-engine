@@ -10,11 +10,12 @@
     "created_at": "2025-10-03",
     "updated_at": "2025-10-03",
     "category": "analysis_design",
-    "status": "active"
+    "status": "active",
+    "human_alias": "Sarah"
   },
 
   "role": {
-    "primary_role": "ui_ux_designer",
+    "primary_role": "UI/UX Designer",
     "experience_level": 8,
     "autonomy_level": 8,
     "specializations": [

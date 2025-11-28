@@ -1,0 +1,110 @@
+# Phase-Test Mapping Configuration
+# Part of QF-200: Phase-Test Mapping with Threshold Enforcement
+#
+# This configuration defines which tests run for each phase
+# and what thresholds must be met before phase completion.
+
+version: "1.0"
+
+# Default thresholds applied to all phases unless overridden
+defaults:
+  coverage_min: 0.75
+  pass_rate_min: 0.95
+  max_critical_issues: 0
+  max_high_issues: 5
+  timeout_minutes: 15
+
+# Phase-to-test mapping
+phase_test_map:
+  requirements:
+    description: "Validate requirement schemas and structure"
+    test_categories:
+      - unit
+    static_analysis:
+      - security/linters/owasp.yaml
+    thresholds:
+      coverage_min: 0.60
+      pass_rate_min: 0.90
+    enforcement: standard
+
+  design:
+    description: "Architecture and design validation"
+    test_categories:
+      - unit
+      - api
+    static_analysis:
+      - architecture/adr-lint.yaml
+    thresholds:
+      coverage_min: 0.70
+      pass_rate_min: 0.90
+    enforcement: standard
+
+  implementation:
+    description: "Code implementation validation"
+    test_categories:
+      - unit
+      - integration
+      - functional
+    test_commands:
+      unit: "pytest::tests/unit"
+      integration: "pytest::tests/integration"
+    thresholds:
+      coverage_min: 0.75
+      pass_rate_min: 0.95
+      max_critical_issues: 0
+      max_high_issues: 5
+    enforcement: strict
+
+  testing:
+    description: "QA testing phase validation"
+    test_categories:
+      - unit
+      - integration
+      - functional
+      - api
+    thresholds:
+      coverage_min: 0.80
+      pass_rate_min: 0.95
+    enforcement: strict
+
+  deployment:
+    description: "Deployment validation with smoke tests"
+    test_categories:
+      - integration
+      - api
+      - performance
+    smoke_tests:
+      - scripts/smoke_tests.sh
+    thresholds:
+      coverage_min: 0.70
+      pass_rate_min: 1.0  # All smoke tests must pass
+    enforcement: strict
+    rollback_on_fail: true
+
+  security_review:
+    description: "Security and compliance validation"
+    test_categories:
+      - security
+      - compliance
+    thresholds:
+      max_critical_issues: 0
+      max_high_issues: 0
+    enforcement: strict
+
+# Environment-specific enforcement levels
+environments:
+  development:
+    enforcement_level: relaxed
+    override_thresholds:
+      coverage_min: 0.50
+      pass_rate_min: 0.80
+
+  testing:
+    enforcement_level: standard
+
+  staging:
+    enforcement_level: strict
+
+  production:
+    enforcement_level: strict
+    rollback_on_fail: true

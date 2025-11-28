@@ -1,0 +1,82 @@
+{
+  "epic_key": "MD-1831",
+  "epic_summary": "[MT-400] Template Versions & Recommendation APIs",
+  "test_cases": [
+    {
+      "id": "TC-001",
+      "name": "Verify Epic Status",
+      "status": "PASS",
+      "execution_time_ms": 165.70186614990234,
+      "error": null,
+      "logs": [
+        "Starting test: Verify Epic Status",
+        "Fetching epic MD-1831...",
+        "Epic status: In Progress",
+        "Epic summary: [MT-400] Template Versions & Recommendation APIs",
+        "Completed in 165.70ms"
+      ]
+    },
+    {
+      "id": "TC-002",
+      "name": "Template Versions API Design",
+      "status": "PASS",
+      "execution_time_ms": 0.006198883056640625,
+      "error": null,
+      "logs": [
+        "Starting test: Template Versions API Design",
+        "Validating versions API design...",
+        "Expected endpoint: GET /api/v1/templates/{id}/versions",
+        "Expected response fields: ['version', 'changes', 'date']",
+        "\u2713 API design validated",
+        "Completed in 0.01ms"
+      ]
+    },
+    {
+      "id": "TC-003",
+      "name": "Template Recommendation API Design",
+      "status": "PASS",
+      "execution_time_ms": 0.0045299530029296875,
+      "error": null,
+      "logs": [
+        "Starting test: Template Recommendation API Design",
+        "Validating recommendation API design...",
+        "Expected endpoint: GET /api/v1/templates/recommend",
+        "Expected params: ['persona', 'tag', 'min_score']",
+        "Expected response fields: ['template_id', 'score', 'usage_stats', 'citations']",
+        "\u2713 API design validated",
+        "Completed in 0.00ms"
+      ]
+    },
+    {
+      "id": "TC-004",
+      "name": "Quality-Fabric Integration",
+      "status": "PASS",
+      "execution_time_ms": 7.439136505126953,
+      "error": null,
+      "logs": [
+        "Starting test: Quality-Fabric Integration",
+        "Checking Quality-Fabric API...",
+        "Health check: {'status': 'healthy', 'service': 'quality-fabric', 'version': '1.0.0', 'environment': 'development', 'timestamp': '2025-11-27T21:23:45.403112', 'uptime_seconds': 1771.8495378494263, 'configuration': {'ai_enabled': True, 'metrics_enabled': True, 'tracing_enabled': True, 'kubernetes_enabled': False}, 'runtime': {'active_executions': 0, 'orchestrator_instances': 0, 'python_version': '3.11.14'}}",
+        "Available instances: 0",
+        "Completed in 7.44ms"
+      ]
+    },
+    {
+      "id": "TC-005",
+      "name": "JIRA Update Capability",
+      "status": "PASS",
+      "execution_time_ms": 344.33460235595703,
+      "error": null,
+      "logs": [
+        "Starting test: JIRA Update Capability",
+        "Testing JIRA comment capability...",
+        "Comment added: 11674",
+        "Completed in 344.33ms"
+      ]
+    }
+  ],
+  "start_time": "2025-11-27T21:23:45.233944",
+  "end_time": "2025-11-27T21:23:45.751693",
+  "overall_status": "PASSED",
+  "summary": "5/5 passed, 0/5 failed"
+}

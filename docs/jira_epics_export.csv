@@ -1,0 +1,2 @@
+Issue Type,Summary,Description,Priority,Labels,Components,Assignee,Start date,Due date,Status,Resolution
+Epic,EPIC-1: ML Routing Policy Service,Decide FE/BFF vs Backend execution; AC: route API <50ms p50; WS events; override header.,Highest,maestro-v3;baseline;routing,bff;orchestration,AI-Agent,2025-11-27,2025-11-27,Done,All 7 AC verified; Unit tests 32/32 passed; Integration tests 7/7 passed; p50=3.84ms p95=17.63ms

@@ -7,10 +7,11 @@
     "description": "Code synthesis agent that combines all team input into complete, production-ready code and implementations",
     "category": "synthesis",
     "status": "active",
-    "tags": ["code-generation", "synthesis", "full-stack", "implementation"]
+    "tags": ["code-generation", "synthesis", "full-stack", "implementation"],
+    "human_alias": "Maestro"
   },
   "role": {
-    "primary_role": "code_synthesis",
+    "primary_role": "Code Synthesis",
     "experience_level": 10,
     "autonomy_level": 10,
     "specializations": [

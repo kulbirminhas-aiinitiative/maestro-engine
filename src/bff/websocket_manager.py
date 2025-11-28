@@ -180,6 +180,188 @@ class WebSocketManager:
 
         await self.send_message(session_id, message)
 
+    async def send_gate_update(
+        self,
+        session_id: str,
+        gate_id: str,
+        gate_type: str,
+        status: str,
+        phase_id: str,
+        workflow_id: str,
+        was_overridden: bool = False,
+        evaluation_result: Optional[Dict[str, Any]] = None,
+    ):
+        """
+        Send gate state update (EPIC-2: ws:gate:update)
+
+        Broadcasts gate status changes for real-time UI updates.
+        AC-5: WebSocket ws:gate:update broadcasts state changes
+        """
+        message = {
+            "type": "ws:gate:update",
+            "gate_id": gate_id,
+            "gate_type": gate_type,
+            "status": status,
+            "phase_id": phase_id,
+            "workflow_id": workflow_id,
+            "was_overridden": was_overridden,
+            "evaluation_result": evaluation_result,
+            "timestamp": datetime.now().isoformat(),
+        }
+
+        await self.send_message(session_id, message)
+
+    # =========================================================================
+    # Deployment Management Events (MD-1790)
+    # =========================================================================
+
+    async def send_deployment_update(
+        self,
+        deployment_id: str,
+        status: str,
+        environment_name: str,
+        version: str,
+        progress: Optional[int] = None,
+        message: Optional[str] = None,
+        error_message: Optional[str] = None,
+        github_run_url: Optional[str] = None,
+    ):
+        """
+        Broadcast deployment status update to all connected clients.
+
+        Part of MD-1790: Unified Deployment Management GUI
+        Enables real-time deployment status tracking in the dashboard.
+
+        Args:
+            deployment_id: Unique deployment identifier
+            status: Current deployment status (pending, in_progress, success, failed, etc.)
+            environment_name: Target environment name
+            version: Version being deployed
+            progress: Optional progress percentage (0-100)
+            message: Optional status message
+            error_message: Error details if deployment failed
+            github_run_url: Link to GitHub Actions run
+        """
+        deployment_msg = {
+            "type": "ws:deployment:update",
+            "deployment_id": deployment_id,
+            "status": status,
+            "environment": environment_name,
+            "version": version,
+            "progress": progress,
+            "message": message,
+            "error_message": error_message,
+            "github_run_url": github_run_url,
+            "timestamp": datetime.now().isoformat(),
+        }
+
+        # Broadcast to all connected clients
+        await self.broadcast_to_all(deployment_msg)
+
+    async def send_health_update(
+        self,
+        environment_id: str,
+        environment_name: str,
+        status: str,
+        response_time_ms: Optional[int] = None,
+        error_message: Optional[str] = None,
+        details: Optional[Dict[str, Any]] = None,
+    ):
+        """
+        Broadcast environment health status update to all connected clients.
+
+        Part of MD-1790: Unified Deployment Management GUI
+        Enables real-time health status in the deployment dashboard.
+        Implements AC-3: Health status per environment
+
+        Args:
+            environment_id: Environment identifier
+            environment_name: Environment display name
+            status: Health status (healthy, degraded, unhealthy, unknown)
+            response_time_ms: Health check response time
+            error_message: Error details if unhealthy
+            details: Additional health check details
+        """
+        health_msg = {
+            "type": "ws:health:update",
+            "environment_id": environment_id,
+            "environment_name": environment_name,
+            "status": status,
+            "response_time_ms": response_time_ms,
+            "error_message": error_message,
+            "details": details or {},
+            "timestamp": datetime.now().isoformat(),
+        }
+
+        # Broadcast to all connected clients
+        await self.broadcast_to_all(health_msg)
+
+    async def send_deployment_log(
+        self,
+        deployment_id: str,
+        level: str,
+        message: str,
+        stage: Optional[str] = None,
+    ):
+        """
+        Send deployment log entry to subscribed clients.
+
+        Part of MD-1790: Real-time deployment log streaming.
+
+        Args:
+            deployment_id: Deployment identifier
+            level: Log level (debug, info, warning, error)
+            message: Log message
+            stage: Deployment stage (build, test, deploy, verify)
+        """
+        log_msg = {
+            "type": "ws:deployment:log",
+            "deployment_id": deployment_id,
+            "level": level,
+            "message": message,
+            "stage": stage,
+            "timestamp": datetime.now().isoformat(),
+        }
+
+        # Broadcast to all connected clients
+        await self.broadcast_to_all(log_msg)
+
+    async def send_rollback_update(
+        self,
+        deployment_id: str,
+        original_deployment_id: str,
+        environment_name: str,
+        version: str,
+        status: str,
+        triggered_by: str,
+    ):
+        """
+        Broadcast rollback status update.
+
+        Part of MD-1790: Implements AC-6 rollback capability notifications.
+
+        Args:
+            deployment_id: New rollback deployment ID
+            original_deployment_id: Deployment being rolled back to
+            environment_name: Target environment
+            version: Version being restored
+            status: Rollback status
+            triggered_by: User who triggered rollback
+        """
+        rollback_msg = {
+            "type": "ws:rollback:update",
+            "deployment_id": deployment_id,
+            "original_deployment_id": original_deployment_id,
+            "environment": environment_name,
+            "version": version,
+            "status": status,
+            "triggered_by": triggered_by,
+            "timestamp": datetime.now().isoformat(),
+        }
+
+        # Broadcast to all connected clients
+        await self.broadcast_to_all(rollback_msg)
+
     # Heartbeat / Keep-Alive
 
     async def send_ping(self, session_id: str):

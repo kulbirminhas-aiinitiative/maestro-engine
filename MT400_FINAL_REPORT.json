@@ -1,0 +1,36 @@
+{
+  "epic_key": "MD-1831",
+  "epic_title": "[MT-400] Template Versions & Recommendation APIs",
+  "status": "COMPLETE",
+  "completion_date": "2025-11-27T21:26:19.163671",
+  "test_results": {
+    "total_tests": 26,
+    "passed": 26,
+    "failed": 0,
+    "pass_rate": 100.0,
+    "execution_time_seconds": 1.35
+  },
+  "deliverables": {
+    "api_endpoints": [
+      "GET /api/v1/templates/{id}/versions",
+      "GET /api/v1/templates/recommend",
+      "GET /api/v1/templates/health"
+    ],
+    "test_suite": "tests/test_mt400_template_api.py",
+    "implementation": "src/api/mt400_template_api.py"
+  },
+  "acceptance_criteria": {
+    "versions_api_array": "\u2705 PASSED",
+    "recommend_api_params": "\u2705 PASSED",
+    "ranked_recommendations": "\u2705 PASSED",
+    "usage_stats_citations": "\u2705 PASSED",
+    "pagination_support": "\u2705 PASSED"
+  },
+  "next_steps": [
+    "Database integration for persistent storage",
+    "QF score aggregation implementation",
+    "Engine metrics integration",
+    "Production deployment",
+    "API documentation publishing"
+  ]
+}

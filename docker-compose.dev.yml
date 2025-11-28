@@ -303,6 +303,27 @@ services:
       retries: 3
       start_period: 5s
 
+  # Portainer CE - Container Management GUI (MD-1790 Phase 1)
+  # Provides immediate Docker visibility for deployment management
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: maestro-portainer
+    ports:
+      - "29000:9000"
+      - "29443:9443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer-data:/data
+    networks:
+      - maestro-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9000/api/status"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
 networks:
   maestro-network:
     external: true
@@ -315,3 +336,5 @@ volumes:
     name: maestro-chroma-data-dev
   redis-data:
     name: maestro-redis-data-dev
+  portainer-data:
+    name: maestro-portainer-data-dev

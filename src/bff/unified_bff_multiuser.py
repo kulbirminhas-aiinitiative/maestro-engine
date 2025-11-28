@@ -209,10 +209,53 @@ class RoomManager:
 room_manager = RoomManager()
 
 
+def normalize_agent_name(name: str) -> str:
+    """
+    Normalize agent display name to persona_id format
+    Examples:
+    - "Requirement Analyst" → "requirement_analyst"
+    - "UI/UX Designer" → "ui_ux_designer"
+    - "amigo" → "amigo"
+    """
+    # Convert to lowercase
+    normalized = name.lower()
+    # Replace slashes and spaces with underscores
+    normalized = re.sub(r'[/\s]+', '_', normalized)
+    # Remove any characters that aren't alphanumeric or underscore
+    normalized = re.sub(r'[^\w]', '', normalized)
+    return normalized
+
+
 def extract_mentions(content: str) -> List[str]:
-    """Extract @mentions from message content"""
-    mentions = re.findall(r'@(\w+)', content)
-    return [m.lower() for m in mentions]
+    """
+    Extract @mentions from message content
+    Supports multi-word names like "@Requirement Analyst" or "@UI/UX Designer"
+    Returns normalized persona_ids
+
+    Strategy: Capture @ followed by capitalized words or lowercase single words
+    - "@amigo" → captures "amigo"
+    - "@Requirement Analyst" → captures "Requirement Analyst" (stops at lowercase "can")
+    - "@UI/UX Designer" → captures "UI/UX Designer"
+    """
+    # Pattern explanation:
+    # @ - literal @
+    # ([A-Z][A-Za-z0-9/]*) - Capitalized word (for "Requirement", "UI/UX", etc.)
+    # (?:\s+[A-Z][A-Za-z0-9/]*)* - Optional additional capitalized words
+    # | - OR
+    # ([a-z][a-z0-9]*) - Single lowercase word (for "amigo", "maestro", etc.)
+    mentions = re.findall(r'@(?:([A-Z][A-Za-z0-9/]*(?:\s+[A-Z][A-Za-z0-9/]*)*)|([a-z][a-z0-9]*))', content)
+
+    # Normalize each mention to persona_id format
+    normalized_mentions = []
+    for match_tuple in mentions:
+        # match_tuple is (capitalized_match, lowercase_match) - one will be empty
+        mention = match_tuple[0] if match_tuple[0] else match_tuple[1]
+        if mention:
+            # Normalize to persona_id format
+            normalized = normalize_agent_name(mention)
+            normalized_mentions.append(normalized)
+
+    return normalized_mentions
 
 
 @asynccontextmanager
@@ -664,6 +707,9 @@ async def generate_collaboration_ai_response(
     Generate AI response in collaboration room
     Uses Claude Agent SDK with full tool access (web browsing, code execution, etc.)
     """
+    # Initialize system_prompt with a default value to prevent UnboundLocalError
+    system_prompt = f"You are {agent_name.capitalize()}, an AI assistant. Be helpful and conversational."
+
     try:
         # Load agent persona
         persona_file = Path(f"/home/ec2-user/projects/maestro-engine-new/src/personas/definitions/{agent_name.lower()}.json")
@@ -675,7 +721,7 @@ async def generate_collaboration_ai_response(
                 "name": agent_name.capitalize(),
                 "role": "AI Assistant"
             }
-            system_prompt = f"You are {agent_name.capitalize()}, an AI assistant. Be helpful and conversational."
+            # system_prompt already initialized with default value
         else:
             with open(persona_file, "r") as f:
                 agent_info = json.load(f)

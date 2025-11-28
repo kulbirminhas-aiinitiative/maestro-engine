@@ -10,11 +10,12 @@
     "created_at": "2025-10-03",
     "updated_at": "2025-10-03",
     "category": "documentation",
-    "status": "active"
+    "status": "active",
+    "human_alias": "Lisa"
   },
 
   "role": {
-    "primary_role": "technical_writer",
+    "primary_role": "Technical Writer",
     "experience_level": 7,
     "autonomy_level": 7,
     "specializations": [

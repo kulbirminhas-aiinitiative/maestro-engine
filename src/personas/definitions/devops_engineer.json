@@ -10,11 +10,12 @@
     "created_at": "2025-10-03",
     "updated_at": "2025-10-03",
     "category": "operations",
-    "status": "active"
+    "status": "active",
+    "human_alias": "David"
   },
 
   "role": {
-    "primary_role": "devops_engineer",
+    "primary_role": "DevOps Engineer",
     "experience_level": 8,
     "autonomy_level": 8,
     "specializations": [

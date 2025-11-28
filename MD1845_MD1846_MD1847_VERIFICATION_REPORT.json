@@ -1,0 +1,301 @@
+{
+  "report_title": "MD-1845, MD-1846, MD-1847 - Template Promotion API Routes Verification Report",
+  "report_date": "2025-11-28T04:30:00Z",
+  "jira_tickets": {
+    "MD-1845": {
+      "title": "[ME-600-3] Implement POST /api/templates/promote Endpoint",
+      "status": "COMPLETE"
+    },
+    "MD-1846": {
+      "title": "[ME-600-4] Implement Approval Workflow",
+      "status": "COMPLETE"
+    },
+    "MD-1847": {
+      "title": "[ME-600-5] Implement Semantic Versioning & Changelog",
+      "status": "COMPLETE"
+    }
+  },
+  "project": "maestro-engine-new",
+  "summary": {
+    "unit_tests_passed": 107,
+    "unit_tests_failed": 0,
+    "routes_tests": 51,
+    "service_tests": 56,
+    "acceptance_criteria_met": "ALL",
+    "overall_status": "COMPLETE"
+  },
+  "md_1845_acceptance_criteria": {
+    "AC-1": {
+      "title": "Request Validation",
+      "description": "Request validation with Pydantic models for all fields",
+      "status": "PASSED",
+      "implementation": "PromoteRequest model with validators for environment, version_bump, content",
+      "tests": [
+        "test_promote_request_valid",
+        "test_promote_request_invalid_environment",
+        "test_promote_request_invalid_bump_type",
+        "test_promote_request_with_changes"
+      ]
+    },
+    "AC-2": {
+      "title": "Response Format",
+      "description": "Structured response with promotion details",
+      "status": "PASSED",
+      "implementation": "PromoteResponse model with all promotion fields",
+      "tests": ["test_promote_response"]
+    },
+    "AC-3": {
+      "title": "Criteria Validation",
+      "description": "Validation against quality/security thresholds",
+      "status": "PASSED",
+      "implementation": "Integration with TemplatePromotionService.validate_promotion_criteria()"
+    },
+    "AC-4": {
+      "title": "Audit Logging",
+      "description": "All promotion operations are logged",
+      "status": "PASSED",
+      "implementation": "AuditLogger class with filtering and capacity management",
+      "tests": [
+        "test_audit_log_creates_entry",
+        "test_audit_log_filters_by_template",
+        "test_audit_log_filters_by_action",
+        "test_audit_log_respects_limit",
+        "test_audit_log_tracks_success_failure",
+        "test_audit_log_capacity"
+      ]
+    },
+    "AC-5": {
+      "title": "Authentication",
+      "description": "API key and JWT Bearer token support",
+      "status": "PASSED",
+      "implementation": "get_current_user() and require_auth() dependencies"
+    },
+    "AC-6": {
+      "title": "Rate Limiting",
+      "description": "Request rate limiting per client",
+      "status": "PASSED",
+      "implementation": "RateLimiter class with configurable requests per minute",
+      "tests": [
+        "test_rate_limiter_allows_initial_request",
+        "test_rate_limiter_tracks_multiple_requests",
+        "test_rate_limiter_separate_clients",
+        "test_rate_limiter_get_remaining"
+      ]
+    }
+  },
+  "md_1846_acceptance_criteria": {
+    "AC-1": {
+      "title": "Approval Config",
+      "description": "Configurable approval requirements (approvers, timeout)",
+      "status": "PASSED",
+      "implementation": "ApprovalRequest with required_approvers and timeout_hours",
+      "tests": [
+        "test_approval_request_creation",
+        "test_approver_count_bounds"
+      ]
+    },
+    "AC-2": {
+      "title": "Request Tracking",
+      "description": "Track approval requests by promotion ID",
+      "status": "PASSED",
+      "implementation": "ApprovalWorkflow with _by_promotion mapping",
+      "tests": [
+        "test_create_request",
+        "test_get_request_by_id",
+        "test_get_request_by_promotion"
+      ]
+    },
+    "AC-3": {
+      "title": "Notifications",
+      "description": "Notification queue for approval events",
+      "status": "PASSED",
+      "implementation": "_queue_notification(), get_pending_notifications(), mark_notification_sent()",
+      "tests": [
+        "test_notifications_queued",
+        "test_mark_notification_sent"
+      ]
+    },
+    "AC-4": {
+      "title": "Approve Endpoint",
+      "description": "POST /api/templates/promote/{id}/approve",
+      "status": "PASSED",
+      "implementation": "approve_promotion() endpoint with multi-approver support",
+      "tests": [
+        "test_approve_request",
+        "test_approve_multi_approver",
+        "test_approve_duplicate_prevented",
+        "test_approve_expired_request"
+      ]
+    },
+    "AC-5": {
+      "title": "Reject Endpoint",
+      "description": "POST /api/templates/promote/{id}/reject with reason",
+      "status": "PASSED",
+      "implementation": "reject_promotion() endpoint with mandatory reason",
+      "tests": [
+        "test_reject_request",
+        "test_reject_request_requires_reason"
+      ]
+    },
+    "AC-6": {
+      "title": "Timeout Handling",
+      "description": "Automatic expiration of pending requests",
+      "status": "PASSED",
+      "implementation": "is_expired property and check_timeouts() method",
+      "tests": [
+        "test_approval_request_expiration",
+        "test_check_timeouts",
+        "test_timeout_handling"
+      ]
+    },
+    "AC-7": {
+      "title": "Audit Trail",
+      "description": "All approval actions logged",
+      "status": "PASSED",
+      "implementation": "Integration with AuditLogger for approve/reject operations"
+    }
+  },
+  "md_1847_acceptance_criteria": {
+    "AC-1": {
+      "title": "SemVer Calculation",
+      "description": "Automatic version calculation from changes",
+      "status": "PASSED",
+      "implementation": "Inherited from TemplatePromotionService.calculate_version()"
+    },
+    "AC-2": {
+      "title": "Breaking Change Detection",
+      "description": "Detect and flag breaking changes",
+      "status": "PASSED",
+      "implementation": "ChangeDescription.breaking flag, markdown flagging",
+      "tests": ["test_changelog_markdown_generation"]
+    },
+    "AC-3": {
+      "title": "Changelog Generation",
+      "description": "Auto-generate changelog from changes",
+      "status": "PASSED",
+      "implementation": "VersionHistory.record_version() and get_changelog()",
+      "tests": [
+        "test_record_version",
+        "test_get_changelog",
+        "test_changelog_markdown_generation",
+        "test_empty_changelog"
+      ]
+    },
+    "AC-4": {
+      "title": "Version History",
+      "description": "Track all versions with metadata",
+      "status": "PASSED",
+      "implementation": "VersionHistory class with history storage",
+      "tests": [
+        "test_get_versions_ordered",
+        "test_get_specific_version",
+        "test_version_history_respects_limit"
+      ]
+    },
+    "AC-5": {
+      "title": "GET /versions Endpoint",
+      "description": "GET /api/templates/{id}/versions",
+      "status": "PASSED",
+      "implementation": "get_template_versions() endpoint",
+      "tests": ["test_version_list_response"]
+    },
+    "AC-6": {
+      "title": "GET /changelog Endpoint",
+      "description": "GET /api/templates/{id}/changelog with JSON/Markdown formats",
+      "status": "PASSED",
+      "implementation": "get_template_changelog() endpoint with format parameter",
+      "tests": ["test_changelog_response"]
+    }
+  },
+  "files_created": [
+    {
+      "path": "src/api/template_promotion_routes.py",
+      "description": "API routes for template promotion",
+      "lines": 850,
+      "endpoints": [
+        "POST /api/templates/promote",
+        "GET /api/templates/promote/{promotion_id}",
+        "POST /api/templates/promote/{promotion_id}/approve",
+        "POST /api/templates/promote/{promotion_id}/reject",
+        "GET /api/templates/promote/{promotion_id}/approval",
+        "GET /api/templates/notifications",
+        "POST /api/templates/notifications/{notification_id}/mark-sent",
+        "GET /api/templates/{template_id}/versions",
+        "GET /api/templates/{template_id}/versions/{version}",
+        "GET /api/templates/{template_id}/changelog",
+        "GET /api/templates/audit/logs",
+        "GET /api/templates/promotion/health",
+        "GET /api/templates/promotion/config"
+      ],
+      "classes": [
+        "RateLimiter",
+        "AuditLogger",
+        "ApprovalStatus",
+        "ApprovalRequest",
+        "ApprovalWorkflow",
+        "VersionHistory",
+        "PromoteRequest",
+        "PromoteResponse",
+        "ApproveRequest",
+        "RejectRequest",
+        "ApprovalStatusResponse",
+        "VersionListResponse",
+        "ChangelogResponse",
+        "ChangeDescription",
+        "NotificationResponse",
+        "VersionResponse"
+      ]
+    },
+    {
+      "path": "tests/unit/test_template_promotion_routes.py",
+      "description": "Comprehensive unit tests for API routes",
+      "test_count": 51,
+      "test_classes": [
+        "TestRateLimiter",
+        "TestAuditLogger",
+        "TestApprovalRequest",
+        "TestApprovalWorkflow",
+        "TestVersionHistory",
+        "TestRequestModels",
+        "TestResponseModels",
+        "TestIntegrationScenarios",
+        "TestEdgeCases"
+      ]
+    }
+  ],
+  "api_endpoints": {
+    "promote": {
+      "method": "POST",
+      "path": "/api/templates/promote",
+      "description": "Promote template with validation, optional approval workflow"
+    },
+    "approve": {
+      "method": "POST",
+      "path": "/api/templates/promote/{id}/approve",
+      "description": "Approve pending promotion request"
+    },
+    "reject": {
+      "method": "POST",
+      "path": "/api/templates/promote/{id}/reject",
+      "description": "Reject pending promotion request with reason"
+    },
+    "versions": {
+      "method": "GET",
+      "path": "/api/templates/{id}/versions",
+      "description": "Get version history for template"
+    },
+    "changelog": {
+      "method": "GET",
+      "path": "/api/templates/{id}/changelog",
+      "description": "Get changelog in JSON or Markdown format"
+    }
+  },
+  "integration_tests_passed": [
+    "test_full_promotion_with_approval",
+    "test_promotion_rejection_flow",
+    "test_timeout_handling"
+  ],
+  "dependencies_on_previous_work": {
+    "MD-1844": "Uses TemplatePromotionService for core promotion logic"
+  }
+}

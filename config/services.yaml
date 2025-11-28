@@ -33,6 +33,22 @@ services:
       description: "Monitoring dashboards"
       version: "1.0.0"
 
+  portainer:
+    port: 29000
+    category: deployment
+    public: true
+    health: /api/status
+    external: false
+    metadata:
+      description: "Portainer CE - Container Management GUI (MD-1790)"
+      version: "latest"
+      features:
+        - "Docker container visibility"
+        - "Container logs and stats"
+        - "Image management"
+        - "Network inspection"
+        - "Volume management"
+
   frontend:
     port: 4200
     category: frontend
