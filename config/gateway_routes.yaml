@@ -20,7 +20,7 @@ routes:
   # Personas Service (Production Backend on port 3100)
   # Note: Backend URL includes the path prefix since backend expects full path
   - path: /api/personas*
-    backend: ${AUTH_SERVICE_URL:http://host.docker.internal:3100/api/personas}
+    backend: ${PERSONAS_SERVICE_URL:http://host.docker.internal:3100/api/personas}
     rate_limit: 100/minute
     requires_auth: false
     cache_ttl: 60  # Cache for 1 minute (read-heavy endpoint)
@@ -28,7 +28,7 @@ routes:
   # AI Agents Service (Production Backend on port 3100)
   # Note: Backend URL includes the path prefix since backend expects full path
   - path: /api/v1/ai-agents*
-    backend: ${AUTH_SERVICE_URL:http://host.docker.internal:3100/api/v1/ai-agents}
+    backend: ${AI_AGENTS_SERVICE_URL:http://host.docker.internal:3100/api/v1/ai-agents}
     rate_limit: 100/minute
     requires_auth: false
     cache_ttl: 0  # No caching for favorites operations
@@ -36,7 +36,7 @@ routes:
   # Teams Service (Production Backend on port 3100)
   # Note: Backend URL includes the path prefix since backend expects full path
   - path: /api/teams*
-    backend: ${AUTH_SERVICE_URL:http://host.docker.internal:3100/api/teams}
+    backend: ${TEAMS_SERVICE_URL:http://host.docker.internal:3100/api/teams}
     rate_limit: 100/minute
     requires_auth: false
     cache_ttl: 60  # Cache for 1 minute (read-heavy endpoint)
@@ -44,7 +44,7 @@ routes:
   # Missions Service (Production Backend on port 3100)
   # Note: Backend URL includes the path prefix since backend expects full path
   - path: /api/missions*
-    backend: ${AUTH_SERVICE_URL:http://host.docker.internal:3100/api/missions}
+    backend: ${MISSIONS_SERVICE_URL:http://host.docker.internal:3100/api/missions}
     rate_limit: 100/minute
     requires_auth: false
     cache_ttl: 0  # No caching for real-time mission operations
@@ -234,11 +234,20 @@ routes:
 
   # WebSocket routes (for real-time updates)
 
+  # Socket.io WebSocket route (for frontend real-time connections)
+  # MD-1953: Frontend uses socket.io for real-time updates
+  - path: /socket.io/*
+    backend: ${BACKEND_BASE_URL:http://host.docker.internal:3100}
+    rate_limit: 50/minute
+    requires_auth: false
+    cache_ttl: 0
+    websocket: true
+
   # Workflow-specific WebSocket for DAG execution real-time updates
   # Part of Frontend-Backend DAG Workflow Integration (MD-1649)
   # Frontend dag-workflow-client.ts connects to /ws/workflow/:id
   - path: /ws/workflow/*
-    backend: ${AUTH_SERVICE_URL:http://host.docker.internal:3100}
+    backend: ${BACKEND_BASE_URL:http://host.docker.internal:3100}
     rate_limit: 50/minute
     requires_auth: false
     cache_ttl: 0
@@ -247,7 +256,7 @@ routes:
   # General WebSocket route for backend (missions, workflows, etc.)
   # Must be after specific routes to allow more specific patterns to match first
   - path: /ws*
-    backend: ${AUTH_SERVICE_URL:http://host.docker.internal:3100}
+    backend: ${BACKEND_BASE_URL:http://host.docker.internal:3100}
     rate_limit: 50/minute
     requires_auth: false
     cache_ttl: 0
@@ -280,8 +289,26 @@ routes:
     cache_ttl: 0
 
   # =========================================
+  # Integration Task Adapter (MD-1952)
+  # =========================================
+
+  # Integration Tasks API - JIRA/GitHub/Linear adapter
+  - path: /api/integrations*
+    backend: ${BACKEND_BASE_URL:http://host.docker.internal:3100}/api/integrations
+    rate_limit: 100/minute
+    requires_auth: false
+    cache_ttl: 0
+
+  # =========================================
   # Deployment Management (MD-1790)
   # =========================================
+
+  # Deployments API - Environment management and deployment operations
+  - path: /api/deployments*
+    backend: ${BACKEND_BASE_URL:http://host.docker.internal:3100}/api/deployments
+    rate_limit: 50/minute
+    requires_auth: false
+    cache_ttl: 0
 
   # Portainer CE - Container Management GUI (Phase 1 Quick Win)
   - path: /portainer*
@@ -311,9 +338,11 @@ cors:
     - http://localhost:4200  # Frontend dev server
     - http://localhost:4300  # Frontend production dev server
     - http://localhost:3000  # Alternative frontend port
-    - http://3.10.213.208:4300  # Public IP access
+    - http://localhost:13000  # Sandbox frontend (local access)
+    - http://3.10.213.208:4300  # Public IP access (dev)
+    - http://3.10.213.208:13000  # Public IP access (sandbox)
     - ${FRONTEND_URL:http://localhost:4200}
-  allow_origin_regex: "https?://.*:(4200|4300)"  # Allow any host on ports 4200 or 4300
+  allow_origin_regex: "https?://.*:(3000|4200|4300|13000)"  # Allow any host on frontend ports
   allow_methods:
     - GET
     - POST
