@@ -10,19 +10,51 @@ from .models import (
     PersonaDefinition,
     PersonaExecutionResult,
     PersonaStatus,
+    ValidationRules,
     WorkflowConfig,
     WorkflowResult,
+)
+from .lifecycle import (
+    # Enums
+    PersonaState,
+    PrimaryLLM,
+    CoreActivity,
+    ConfidentialityLevel,
+    VALID_STATE_TRANSITIONS,
+    # Runtime model
+    PersonaRuntime,
+    # Exceptions
+    PersonaError,
+    PersonaNotFoundError,
+    InvalidStateTransitionError,
+    PersonaAlreadyExistsError,
+    ClassificationDowngradeError,
 )
 from .registry import PersonaRegistry, get_registry
 
 __all__ = [
-    # Models
+    # Schema Models (from models.py)
     "PersonaDefinition",
     "PersonaCategory",
     "PersonaStatus",
     "PersonaExecutionResult",
+    "ValidationRules",
     "WorkflowConfig",
     "WorkflowResult",
+    # Lifecycle Enums (from lifecycle.py)
+    "PersonaState",
+    "PrimaryLLM",
+    "CoreActivity",
+    "ConfidentialityLevel",
+    "VALID_STATE_TRANSITIONS",
+    # Runtime Model (from lifecycle.py)
+    "PersonaRuntime",
+    # Exceptions (from lifecycle.py)
+    "PersonaError",
+    "PersonaNotFoundError",
+    "InvalidStateTransitionError",
+    "PersonaAlreadyExistsError",
+    "ClassificationDowngradeError",
     # Registry
     "PersonaRegistry",
     "get_registry",

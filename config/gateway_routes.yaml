@@ -51,70 +51,70 @@ routes:
 
   # Accelerator Mode BFF (Rapid Prototyping)
   - path: /api/v1/accelerator/*
-    backend: ${BFF_SERVICE_URL:http://localhost:4001}
+    backend: ${BFF_SERVICE_URL:http://host.docker.internal:4001}
     rate_limit: 100/minute
     requires_auth: false
     cache_ttl: 0  # No caching for interactive sessions
 
   # Guardian Mode Engine (Full SDLC)
   - path: /api/v1/guardian/*
-    backend: ${MAESTRO_ENGINE_URL:http://localhost:5000}
+    backend: ${MAESTRO_ENGINE_URL:http://host.docker.internal:5000}
     rate_limit: 20/minute
     requires_auth: false
     cache_ttl: 0  # No caching for orchestration
 
   # Template Service (Read-heavy, cache-friendly)
   - path: /api/v1/templates/*
-    backend: ${TEMPLATE_SERVICE_URL:http://localhost:9600}
+    backend: ${TEMPLATE_SERVICE_URL:http://host.docker.internal:9600}
     rate_limit: 200/minute
     requires_auth: false
     cache_ttl: 300  # Cache for 5 minutes
 
   # RAG Service (Knowledge retrieval)
   - path: /api/v1/rag/*
-    backend: ${RAG_SERVICE_URL:http://localhost:9803}
+    backend: ${RAG_SERVICE_URL:http://host.docker.internal:9803}
     rate_limit: 100/minute
     requires_auth: false
     cache_ttl: 60  # Cache for 1 minute
 
   # MCP Service (Model Context Protocol)
   - path: /api/v1/mcp/*
-    backend: ${MCP_SERVICE_URL:http://localhost:9800}
+    backend: ${MCP_SERVICE_URL:http://host.docker.internal:9800}
     rate_limit: 100/minute
     requires_auth: false
     cache_ttl: 0
 
   # Quality Fabric (Testing service)
   - path: /api/v1/quality/*
-    backend: ${QUALITY_FABRIC_URL:http://localhost:8000}
+    backend: ${QUALITY_FABRIC_URL:http://host.docker.internal:8000}
     rate_limit: 50/minute
     requires_auth: false
     cache_ttl: 0
 
   # Coordinator Service
   - path: /api/v1/coordinator/*
-    backend: ${COORDINATOR_SERVICE_URL:http://localhost:8002}
+    backend: ${COORDINATOR_SERVICE_URL:http://host.docker.internal:8002}
     rate_limit: 50/minute
     requires_auth: false
     cache_ttl: 0
 
   # Orchestration Service
   - path: /api/v1/orchestration/*
-    backend: ${ORCHESTRATION_SERVICE_URL:http://localhost:8004}
+    backend: ${ORCHESTRATION_SERVICE_URL:http://host.docker.internal:8004}
     rate_limit: 50/minute
     requires_auth: false
     cache_ttl: 0
 
   # Deployment Files (BFF)
   - path: /api/deployment/*
-    backend: ${BFF_SERVICE_URL:http://localhost:4001}
+    backend: ${BFF_SERVICE_URL:http://host.docker.internal:4001}
     rate_limit: 100/minute
     requires_auth: false
     cache_ttl: 0
 
   # SDLC Documents and History (BFF)
   - path: /api/sdlc/*
-    backend: ${BFF_SERVICE_URL:http://localhost:4001}
+    backend: ${BFF_SERVICE_URL:http://host.docker.internal:4001}
     rate_limit: 100/minute
     requires_auth: false
     cache_ttl: 0
@@ -263,13 +263,13 @@ routes:
     websocket: true
 
   - path: /ws/guardian/*
-    backend: ${MAESTRO_ENGINE_URL:http://localhost:5000}
+    backend: ${MAESTRO_ENGINE_URL:http://host.docker.internal:5000}
     rate_limit: 10/minute
     requires_auth: false
     cache_ttl: 0
 
   - path: /ws/accelerator/*
-    backend: ${BFF_SERVICE_URL:http://localhost:4001}
+    backend: ${BFF_SERVICE_URL:http://host.docker.internal:4001}
     rate_limit: 10/minute
     requires_auth: false
     cache_ttl: 0
@@ -312,21 +312,21 @@ routes:
 
   # Portainer CE - Container Management GUI (Phase 1 Quick Win)
   - path: /portainer*
-    backend: ${PORTAINER_URL:http://localhost:29000}
+    backend: ${PORTAINER_URL:http://host.docker.internal:29000}
     rate_limit: 100/minute
     requires_auth: false
     cache_ttl: 0
 
   # Deployment Management API (Phase 2)
   - path: /api/v1/deployments/*
-    backend: ${BFF_SERVICE_URL:http://localhost:4001}
+    backend: ${BFF_SERVICE_URL:http://host.docker.internal:4001}
     rate_limit: 50/minute
     requires_auth: false
     cache_ttl: 0
 
   # Deployment WebSocket for real-time updates
   - path: /ws/deployments/*
-    backend: ${BFF_SERVICE_URL:http://localhost:4001}
+    backend: ${BFF_SERVICE_URL:http://host.docker.internal:4001}
     rate_limit: 10/minute
     requires_auth: false
     cache_ttl: 0

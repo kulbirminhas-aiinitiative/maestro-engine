@@ -1,0 +1,327 @@
+# Governance Protocol Configuration
+# Defines required documentation and quality gates per phase
+# Version: 1.0.0
+
+version: "1.0.0"
+name: "Enterprise Governance Protocol"
+description: "Defines documentation requirements, approval workflows, and quality gates for all phases"
+
+# =============================================================================
+# Phase Governance Requirements
+# =============================================================================
+phases:
+  # -------------------------------------------------------------------------
+  # Requirements Phase
+  # -------------------------------------------------------------------------
+  requirements:
+    display_name: "Requirements Phase"
+    required_documents:
+      - name: "Business Requirements Document"
+        template: "brd_template"
+        validation:
+          min_sections: 5
+          required_sections:
+            - "executive_summary"
+            - "business_objectives"
+            - "scope"
+            - "stakeholders"
+            - "success_criteria"
+      - name: "Stakeholder Analysis"
+        template: "stakeholder_template"
+        validation:
+          min_stakeholders: 2
+    quality_gates:
+      - gate_type: "BRV"
+        name: "Business Requirements Approval"
+        enforcement: "mandatory"
+        approvers:
+          min_count: 1
+          roles: ["product_owner", "business_analyst", "sponsor"]
+      - gate_type: "ACC"
+        name: "Acceptance Criteria Defined"
+        enforcement: "mandatory"
+        criteria:
+          min_criteria: 3
+    approval_workflow:
+      type: "sequential"
+      stages:
+        - name: "Draft Review"
+          approvers: ["author", "peer"]
+        - name: "Business Approval"
+          approvers: ["product_owner"]
+    audit_requirements:
+      log_all_changes: true
+      require_change_justification: true
+
+  # -------------------------------------------------------------------------
+  # Design Phase
+  # -------------------------------------------------------------------------
+  design:
+    display_name: "Design Phase"
+    required_documents:
+      - name: "Architecture Decision Record"
+        template: "adr_template"
+        validation:
+          min_sections: 6
+          required_sections:
+            - "context"
+            - "decision"
+            - "rationale"
+            - "consequences"
+            - "alternatives"
+            - "status"
+      - name: "Technical Design Document"
+        template: "tdd_template"
+        validation:
+          min_sections: 4
+          required_sections:
+            - "overview"
+            - "architecture"
+            - "data_model"
+            - "api_contracts"
+      - name: "Security Review Checklist"
+        template: "security_checklist"
+        optional: true
+    quality_gates:
+      - gate_type: "DDE"
+        name: "Architecture Decisions Documented"
+        enforcement: "mandatory"
+        validation:
+          adr_count_min: 1
+      - gate_type: "BRV"
+        name: "Design Review Completed"
+        enforcement: "advisory"
+        approvers:
+          min_count: 1
+          roles: ["architect", "tech_lead"]
+    approval_workflow:
+      type: "parallel"
+      stages:
+        - name: "Technical Review"
+          approvers: ["tech_lead", "architect"]
+        - name: "Security Review"
+          approvers: ["security_team"]
+          optional: true
+    audit_requirements:
+      log_all_changes: true
+      require_change_justification: true
+
+  # -------------------------------------------------------------------------
+  # Implementation Phase
+  # -------------------------------------------------------------------------
+  implementation:
+    display_name: "Implementation Phase"
+    required_documents:
+      - name: "Implementation Plan"
+        template: "implementation_plan_template"
+        validation:
+          min_sections: 3
+          required_sections:
+            - "tasks"
+            - "dependencies"
+            - "timeline"
+      - name: "Code Review Guidelines"
+        template: "code_review_template"
+        optional: true
+    quality_gates:
+      - gate_type: "DDE"
+        name: "Code Standards Met"
+        enforcement: "mandatory"
+        criteria:
+          linting_passed: true
+          type_checking_passed: true
+      - gate_type: "ACC"
+        name: "Unit Tests Passing"
+        enforcement: "mandatory"
+        metrics:
+          coverage_min: 80
+          all_tests_pass: true
+    approval_workflow:
+      type: "code_review"
+      stages:
+        - name: "Peer Review"
+          approvers: ["peer_developer"]
+          min_approvals: 1
+        - name: "Lead Approval"
+          approvers: ["tech_lead"]
+          min_approvals: 1
+    audit_requirements:
+      log_all_changes: true
+      track_code_commits: true
+
+  # -------------------------------------------------------------------------
+  # Testing Phase
+  # -------------------------------------------------------------------------
+  testing:
+    display_name: "Testing Phase"
+    required_documents:
+      - name: "Test Plan"
+        template: "test_plan_template"
+        validation:
+          min_sections: 4
+          required_sections:
+            - "scope"
+            - "test_cases"
+            - "environment"
+            - "criteria"
+      - name: "Test Results Report"
+        template: "test_results_template"
+        validation:
+          required_fields:
+            - "total_tests"
+            - "passed"
+            - "failed"
+            - "coverage"
+    quality_gates:
+      - gate_type: "ACC"
+        name: "Integration Tests Passing"
+        enforcement: "mandatory"
+        metrics:
+          all_tests_pass: true
+          critical_path_coverage: 100
+      - gate_type: "DDE"
+        name: "Test Coverage Met"
+        enforcement: "advisory"
+        metrics:
+          coverage_min: 85
+    approval_workflow:
+      type: "sequential"
+      stages:
+        - name: "QA Sign-off"
+          approvers: ["qa_engineer"]
+        - name: "Stakeholder UAT"
+          approvers: ["product_owner"]
+          optional: true
+    audit_requirements:
+      log_all_changes: true
+      retain_test_artifacts: true
+
+  # -------------------------------------------------------------------------
+  # Deployment Phase
+  # -------------------------------------------------------------------------
+  deployment:
+    display_name: "Deployment Phase"
+    required_documents:
+      - name: "Deployment Checklist"
+        template: "deployment_checklist_template"
+        validation:
+          required_sections:
+            - "pre_deployment"
+            - "deployment_steps"
+            - "post_deployment"
+            - "rollback_plan"
+      - name: "Release Notes"
+        template: "release_notes_template"
+        validation:
+          required_fields:
+            - "version"
+            - "changes"
+            - "known_issues"
+    quality_gates:
+      - gate_type: "BRV"
+        name: "Deployment Approved"
+        enforcement: "mandatory"
+        approvers:
+          min_count: 2
+          roles: ["tech_lead", "devops", "product_owner"]
+      - gate_type: "ACC"
+        name: "Smoke Tests Passing"
+        enforcement: "mandatory"
+        metrics:
+          smoke_tests_pass: true
+          health_checks_pass: true
+    approval_workflow:
+      type: "parallel_with_quorum"
+      quorum: 2
+      stages:
+        - name: "Technical Approval"
+          approvers: ["tech_lead", "devops"]
+        - name: "Business Approval"
+          approvers: ["product_owner"]
+    audit_requirements:
+      log_all_changes: true
+      require_change_justification: true
+      create_deployment_record: true
+
+# =============================================================================
+# Global Governance Settings
+# =============================================================================
+global_settings:
+  # Enforcement modes
+  enforcement:
+    strict_mode: false  # When true, blocks all phase transitions on failures
+    allow_overrides: true
+    override_requires_justification: true
+    max_override_level: "tech_lead"  # Roles that can override: tech_lead, director, vp
+
+  # Audit configuration
+  audit:
+    retention_days: 365
+    log_level: "detailed"  # minimal, standard, detailed
+    include_document_hashes: true
+    notify_on_governance_failure: true
+
+  # Document validation
+  documents:
+    require_templates: true
+    allow_custom_documents: true
+    auto_version_documents: true
+    hash_algorithm: "sha256"
+
+  # Notifications
+  notifications:
+    channels:
+      - type: "email"
+        on_events: ["governance_failure", "approval_required", "override_used"]
+      - type: "webhook"
+        on_events: ["phase_complete", "governance_passed"]
+
+# =============================================================================
+# Role Definitions
+# =============================================================================
+roles:
+  product_owner:
+    display_name: "Product Owner"
+    permissions:
+      - "approve_requirements"
+      - "approve_deployment"
+      - "view_governance_reports"
+
+  tech_lead:
+    display_name: "Technical Lead"
+    permissions:
+      - "approve_design"
+      - "approve_implementation"
+      - "approve_deployment"
+      - "override_advisory_gates"
+      - "view_governance_reports"
+
+  architect:
+    display_name: "Architect"
+    permissions:
+      - "approve_design"
+      - "view_governance_reports"
+
+  qa_engineer:
+    display_name: "QA Engineer"
+    permissions:
+      - "approve_testing"
+      - "view_governance_reports"
+
+  devops:
+    display_name: "DevOps Engineer"
+    permissions:
+      - "approve_deployment"
+      - "view_governance_reports"
+
+  developer:
+    display_name: "Developer"
+    permissions:
+      - "submit_documents"
+      - "request_approval"
+
+  security_team:
+    display_name: "Security Team"
+    permissions:
+      - "approve_security_review"
+      - "view_governance_reports"

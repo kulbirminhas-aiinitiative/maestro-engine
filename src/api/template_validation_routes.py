@@ -20,7 +20,7 @@ Acceptance Criteria Coverage:
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -34,7 +34,17 @@ except ImportError:
     def sanitize_string(v, **kwargs): return v
     def sanitize_identifier(v, **kwargs): return v
 
-# Import template validation service
+# MD-3203 FIX: Use TYPE_CHECKING for type hints that may not be available at runtime
+# This allows type hints to work for IDE/type checkers while avoiding NameError at runtime
+if TYPE_CHECKING:
+    from services.template_validation_service import (
+        ValidationOperation,
+        ValidationStatus,
+        ValidationResult,
+        ValidationThresholds,
+    )
+
+# Import template validation service for runtime use
 try:
     from services.template_validation_service import (
         get_template_validation_service,
@@ -48,6 +58,11 @@ try:
     HAS_VALIDATION_SERVICE = True
 except ImportError:
     HAS_VALIDATION_SERVICE = False
+    # Define placeholder values for when service is unavailable
+    ValidationOperation = None  # type: ignore
+    ValidationStatus = None  # type: ignore
+    ValidationResult = None  # type: ignore
+    ValidationThresholds = None  # type: ignore
 
 logger = logging.getLogger("template_validation_routes")
 

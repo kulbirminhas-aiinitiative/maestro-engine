@@ -1,0 +1,60 @@
+{
+  "persona_id": "marcus",
+  "persona_name": "Marcus Thompson",
+  "role": "System Architect",
+  "document_type": "patterns",
+  "category": "architecture",
+  "documents": [
+    {
+      "id": "marcus-001",
+      "title": "REST API Architecture Pattern",
+      "content": "## REST API Architecture Design\n\n### Component Structure\n```\n┌─────────────────────────────────────────────────────────┐\n│                    API Gateway                          │\n│  (Rate Limiting, Auth, Routing, SSL Termination)       │\n└─────────────────────────┬───────────────────────────────┘\n                          │\n┌─────────────────────────┼───────────────────────────────┐\n│                    Load Balancer                        │\n└──────────┬──────────────┴──────────────┬────────────────┘\n           │                             │\n┌──────────▼──────────┐       ┌──────────▼──────────┐\n│   API Server 1      │       │   API Server 2      │\n│   (FastAPI/Flask)   │       │   (FastAPI/Flask)   │\n└──────────┬──────────┘       └──────────┬──────────┘\n           │                             │\n           └──────────────┬──────────────┘\n                          │\n┌─────────────────────────┼───────────────────────────────┐\n│                 Service Layer                           │\n│  (Business Logic, Validation, Orchestration)           │\n└─────────────────────────┬───────────────────────────────┘\n                          │\n┌──────────┬──────────────┼───────────────┬───────────────┐\n│ PostgreSQL│    Redis    │   Message     │ External APIs │\n│ (Primary) │   (Cache)   │   Queue       │ (3rd Party)   │\n└──────────┴──────────────┴───────────────┴───────────────┘\n```\n\n### Key Decisions\n1. **Stateless API Servers**: Enable horizontal scaling\n2. **Redis Cache**: 15-minute TTL for frequently accessed data\n3. **Message Queue**: Async processing for heavy operations\n4. **Connection Pooling**: 20 connections per server to DB",
+      "tags": ["rest", "api", "microservices", "scalability"],
+      "quality_score": 0.96
+    },
+    {
+      "id": "marcus-002",
+      "title": "Database Design Patterns",
+      "content": "## Database Architecture Decisions\n\n### PostgreSQL Schema Design\n```sql\n-- Use UUID for distributed systems\nCREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";\n\n-- Base table pattern with audit fields\nCREATE TABLE resources (\n    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),\n    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),\n    created_by UUID REFERENCES users(id),\n    is_deleted BOOLEAN DEFAULT FALSE,\n    version INTEGER DEFAULT 1\n);\n\n-- Soft delete pattern\nCREATE INDEX idx_resources_active ON resources(id) WHERE is_deleted = FALSE;\n\n-- Optimistic locking\nALTER TABLE resources ADD CONSTRAINT version_check \n    CHECK (version > 0);\n```\n\n### Indexing Strategy\n- **Primary Keys**: UUID with B-tree index\n- **Foreign Keys**: Always indexed\n- **Query Columns**: Composite indexes for common WHERE clauses\n- **Text Search**: GIN indexes for full-text search\n\n### Connection Pool Configuration\n```python\nDATABASE_CONFIG = {\n    'pool_size': 20,\n    'max_overflow': 10,\n    'pool_timeout': 30,\n    'pool_recycle': 3600,\n    'pool_pre_ping': True\n}\n```",
+      "tags": ["database", "postgresql", "schema", "indexing"],
+      "quality_score": 0.94
+    },
+    {
+      "id": "marcus-003",
+      "title": "Authentication Architecture",
+      "content": "## JWT Authentication Architecture\n\n### Token Flow\n```\n1. User logs in with credentials\n2. Server validates and returns:\n   - Access Token (15 min expiry)\n   - Refresh Token (7 day expiry, httpOnly cookie)\n3. Client uses Access Token in Authorization header\n4. On 401, client uses Refresh Token to get new Access Token\n```\n\n### Security Decisions\n```python\nJWT_CONFIG = {\n    'algorithm': 'RS256',  # Asymmetric for microservices\n    'access_token_expire_minutes': 15,\n    'refresh_token_expire_days': 7,\n    'issuer': 'auth.example.com',\n    'audience': ['api.example.com'],\n}\n\n# Token payload structure\n{\n    'sub': 'user_id',\n    'email': 'user@example.com',\n    'roles': ['user', 'admin'],\n    'permissions': ['read:users', 'write:users'],\n    'iat': 1234567890,\n    'exp': 1234568790,\n    'iss': 'auth.example.com'\n}\n```\n\n### Rate Limiting\n- Login: 5 attempts per 15 minutes per IP\n- API: 100 requests per minute per user\n- Refresh: 10 per hour per user",
+      "tags": ["authentication", "jwt", "security", "oauth"],
+      "quality_score": 0.95
+    },
+    {
+      "id": "marcus-004",
+      "title": "Caching Strategy",
+      "content": "## Multi-Layer Caching Architecture\n\n### Cache Layers\n1. **Browser Cache**: Static assets (1 year), API responses (5 min)\n2. **CDN Cache**: Static content, API responses for public data\n3. **Application Cache**: Redis for session, computed data\n4. **Database Cache**: Query result cache, materialized views\n\n### Redis Caching Patterns\n```python\n# Cache-Aside Pattern\nasync def get_user(user_id: str) -> User:\n    # Try cache first\n    cached = await redis.get(f'user:{user_id}')\n    if cached:\n        return User.parse_raw(cached)\n    \n    # Cache miss - fetch from DB\n    user = await db.get_user(user_id)\n    \n    # Store in cache with TTL\n    await redis.setex(\n        f'user:{user_id}',\n        timedelta(minutes=15),\n        user.json()\n    )\n    return user\n\n# Cache Invalidation\nasync def update_user(user_id: str, data: dict):\n    await db.update_user(user_id, data)\n    await redis.delete(f'user:{user_id}')\n    await redis.delete(f'user_list:*')  # Pattern delete\n```\n\n### Cache Key Naming Convention\n- `{entity}:{id}` - Single entity\n- `{entity}_list:{hash}` - List with filters\n- `{entity}_count:{hash}` - Count queries",
+      "tags": ["caching", "redis", "performance", "scalability"],
+      "quality_score": 0.93
+    }
+  ],
+  "lessons_learned": [
+    {
+      "id": "marcus-lesson-001",
+      "title": "Over-Engineering Early Leads to Wasted Effort",
+      "severity": "medium",
+      "lesson": "Designing for 1M users when you have 100 leads to unnecessary complexity. Start simple, measure, then optimize. Example: Started with Redis cluster when a simple in-memory cache would suffice for 6 months.",
+      "prevention": "Define clear scalability tiers: Tier 1 (0-1K users), Tier 2 (1K-100K), Tier 3 (100K+). Only implement Tier 2+ when approaching Tier 1 limits."
+    },
+    {
+      "id": "marcus-lesson-002",
+      "title": "Missing Error Handling in Architecture",
+      "severity": "high",
+      "lesson": "Architecture diagrams without error flows and fallback strategies lead to cascading failures. Every external call needs timeout, retry, and circuit breaker consideration.",
+      "prevention": "For every external dependency, document: timeout (default 5s), retry policy (3 retries with exponential backoff), circuit breaker threshold (50% failure rate), fallback behavior."
+    },
+    {
+      "id": "marcus-lesson-003",
+      "title": "Ignoring Observability from Start",
+      "severity": "high",
+      "lesson": "Adding monitoring as an afterthought results in blind spots during incidents. Structured logging, metrics, and tracing must be designed into the architecture.",
+      "prevention": "Include in every architecture: structured JSON logging, Prometheus metrics endpoints, OpenTelemetry trace propagation, health check endpoints, correlation IDs."
+    }
+  ]
+}

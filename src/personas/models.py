@@ -19,6 +19,10 @@ class PersonaCategory(str, Enum):
     OPERATIONS = "operations"
     QUALITY_SECURITY = "quality_security"
     DOCUMENTATION = "documentation"
+    # Extended categories for utility personas (MD-4123 Gap Analysis)
+    PERSONAL_ASSISTANCE = "personal_assistance"
+    SYNTHESIS = "synthesis"
+    ORCHESTRATION = "orchestration"
 
 
 class PersonaStatus(str, Enum):
@@ -159,6 +163,78 @@ class QualityMetrics(BaseModel):
     performance_targets: Dict[str, float] = Field(default_factory=dict)
 
 
+class ValidationRules(BaseModel):
+    """
+    Validation requirements for a persona (MD-4123 Regression Fix).
+
+    Defines what validations a persona must perform as part of their
+    intrinsic role - not as a separate workflow step.
+
+    Example:
+        Test Engineer with test_execution_required=True will automatically
+        run pytest after generating test files, failing the contract if
+        tests don't pass.
+    """
+
+    # Test execution requirements
+    required_test_types: List[str] = Field(
+        default_factory=list,
+        description="Types of tests required: unit_tests, integration_tests, e2e_tests"
+    )
+    minimum_coverage: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Minimum test coverage threshold (0.0-1.0)"
+    )
+    test_execution_required: bool = Field(
+        default=False,
+        description="If True, persona must execute tests after generating code"
+    )
+    test_pass_rate_threshold: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Minimum test pass rate required (0.0-1.0)"
+    )
+
+    # Code quality requirements
+    linter_check_required: bool = Field(
+        default=False,
+        description="If True, run linter (flake8/eslint) after code generation"
+    )
+    type_check_required: bool = Field(
+        default=False,
+        description="If True, run type checker (mypy/tsc) after code generation"
+    )
+
+    # Build/compilation requirements
+    build_required: bool = Field(
+        default=False,
+        description="If True, run build step (npm build, cargo build, etc.)"
+    )
+
+    # Documentation requirements
+    report_generation_required: bool = Field(
+        default=False,
+        description="If True, generate validation report after execution"
+    )
+
+    # DevOps-specific validations
+    config_validation_required: bool = Field(
+        default=False,
+        description="If True, validate configuration files (YAML, JSON schema)"
+    )
+    terraform_validate_required: bool = Field(
+        default=False,
+        description="If True, run terraform validate"
+    )
+    docker_build_required: bool = Field(
+        default=False,
+        description="If True, run docker build to validate Dockerfile"
+    )
+
+
 class PersonaDefinition(BaseModel):
     """
     Complete persona definition (Schema v3.0).
@@ -192,6 +268,10 @@ class PersonaDefinition(BaseModel):
     execution: PersonaExecution = Field(default_factory=PersonaExecution)
     prompts: PersonaPrompts
     quality_metrics: Optional[QualityMetrics] = None
+    validation_rules: Optional[ValidationRules] = Field(
+        default=None,
+        description="Intrinsic validation requirements for this persona (MD-4123)"
+    )
 
     @field_validator("schema_version")
     @classmethod

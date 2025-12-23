@@ -1,0 +1,60 @@
+{
+  "persona_id": "sarah",
+  "persona_name": "Sarah Chen",
+  "role": "Product Owner",
+  "document_type": "examples",
+  "category": "user_stories",
+  "documents": [
+    {
+      "id": "sarah-001",
+      "title": "Authentication User Stories",
+      "content": "### Story: User Login\n**As a** registered user\n**I want** to log in with my email and password\n**So that** I can access my personalized dashboard\n\n**Acceptance Criteria:**\n- Given I am on the login page, When I enter valid credentials, Then I am redirected to my dashboard\n- Given I enter invalid credentials, When I submit, Then I see an error message 'Invalid email or password'\n- Given I fail 3 login attempts, When I try again, Then my account is locked for 15 minutes\n\n**Priority:** High\n**Story Points:** 5",
+      "tags": ["authentication", "login", "security"],
+      "quality_score": 0.95
+    },
+    {
+      "id": "sarah-002",
+      "title": "E-Commerce Cart Stories",
+      "content": "### Story: Add Item to Cart\n**As a** shopper\n**I want** to add products to my shopping cart\n**So that** I can purchase multiple items in one transaction\n\n**Acceptance Criteria:**\n- Given I am viewing a product, When I click 'Add to Cart', Then the item appears in my cart with quantity 1\n- Given an item is in my cart, When I add the same item again, Then the quantity increases by 1\n- Given my cart has items, When I view the cart, Then I see total price calculated correctly\n\n**Priority:** High\n**Story Points:** 3\n\n### Story: Update Cart Quantity\n**As a** shopper\n**I want** to modify quantities in my cart\n**So that** I can adjust my order before checkout\n\n**Acceptance Criteria:**\n- Given I have items in cart, When I change quantity, Then subtotal updates immediately\n- Given I set quantity to 0, When I confirm, Then item is removed from cart\n- Given item has max stock of 10, When I try to add 15, Then quantity is capped at 10 with message",
+      "tags": ["e-commerce", "cart", "shopping"],
+      "quality_score": 0.92
+    },
+    {
+      "id": "sarah-003",
+      "title": "API User Stories Pattern",
+      "content": "### Story: Create Resource via API\n**As a** developer using the API\n**I want** to create new resources via POST endpoint\n**So that** I can programmatically manage data\n\n**Acceptance Criteria:**\n- Given valid JSON payload, When I POST to /api/resources, Then I receive 201 Created with resource ID\n- Given missing required fields, When I POST, Then I receive 400 Bad Request with field errors\n- Given duplicate unique field, When I POST, Then I receive 409 Conflict\n- Given I'm not authenticated, When I POST, Then I receive 401 Unauthorized\n\n**Priority:** High\n**Story Points:** 5\n\n**Technical Notes:**\n- Validate input against JSON schema\n- Return Location header with new resource URL\n- Include created_at timestamp in response",
+      "tags": ["api", "rest", "crud"],
+      "quality_score": 0.94
+    },
+    {
+      "id": "sarah-004",
+      "title": "Requirements Prioritization Framework",
+      "content": "## MoSCoW Prioritization for User Stories\n\n**Must Have (P1):**\n- Core functionality without which product cannot launch\n- Security and compliance requirements\n- Performance baseline requirements\n\n**Should Have (P2):**\n- Important features that add significant value\n- Features that improve user experience significantly\n- Integrations with key systems\n\n**Could Have (P3):**\n- Nice-to-have features\n- Enhancements to existing functionality\n- Advanced customization options\n\n**Won't Have (P4):**\n- Features deferred to future releases\n- Low-value additions\n- Experimental features\n\n## Story Point Estimation Guide\n- 1 point: Simple change, < 2 hours\n- 2 points: Small feature, 2-4 hours\n- 3 points: Medium feature, 1 day\n- 5 points: Larger feature, 2-3 days\n- 8 points: Complex feature, 1 week\n- 13 points: Epic-sized, needs splitting",
+      "tags": ["prioritization", "estimation", "agile"],
+      "quality_score": 0.90
+    }
+  ],
+  "lessons_learned": [
+    {
+      "id": "sarah-lesson-001",
+      "title": "Vague Acceptance Criteria Lead to Rework",
+      "severity": "high",
+      "lesson": "Always write acceptance criteria with specific, measurable outcomes. Avoid words like 'quickly', 'easily', 'user-friendly' without concrete metrics. Example: Instead of 'page loads quickly', write 'page loads in under 2 seconds at p95'.",
+      "prevention": "Use Given-When-Then format and include specific numbers, error messages, and edge cases."
+    },
+    {
+      "id": "sarah-lesson-002",
+      "title": "Missing Edge Cases Cause Production Bugs",
+      "severity": "high",
+      "lesson": "Stories without edge case criteria often result in incomplete implementations. Always consider: empty states, maximum limits, concurrent access, network failures, invalid input.",
+      "prevention": "Add a 'Edge Cases' section to every user story with at least 3 edge cases."
+    },
+    {
+      "id": "sarah-lesson-003",
+      "title": "Story Dependencies Not Documented",
+      "severity": "medium",
+      "lesson": "When stories depend on other stories or external systems, failing to document this leads to blocked sprints and incorrect estimates.",
+      "prevention": "Add 'Dependencies' and 'Blocked By' fields to every story. Include API contracts, database migrations, and third-party integrations."
+    }
+  ]
+}

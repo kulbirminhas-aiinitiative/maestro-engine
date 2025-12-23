@@ -21,6 +21,15 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from api.models import HealthResponse, StatusResponse
 from api.workflow_routes import router as workflow_router
 
+# Symphony Demo (MD-3902) - Multi-Persona AI Conversation
+try:
+    from symphony.symphony_ws import router as symphony_router
+    SYMPHONY_AVAILABLE = True
+except ImportError as e:
+    print(f"Symphony module not available: {e}")
+    SYMPHONY_AVAILABLE = False
+    symphony_router = None
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -69,6 +78,11 @@ app.add_middleware(
 
 # Include workflow routes
 app.include_router(workflow_router)
+
+# Include Symphony routes (MD-3902)
+if SYMPHONY_AVAILABLE and symphony_router:
+    app.include_router(symphony_router)
+    print("✅ Symphony API routes registered at /symphony/*")
 
 
 @app.on_event("startup")
@@ -130,15 +144,27 @@ async def root():
     }
 
 
+async def check_service(url: str, timeout: float = 2.0) -> bool:
+    """Check if a service is responding"""
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            response = await client.get(url)
+            return response.status_code == 200
+    except Exception:
+        return False
+
+
 @app.get("/health", response_model=HealthResponse, tags=["Health"])
 async def health_check():
     """
     Health check endpoint
 
-    Returns service health status and dependency availability
+    Returns service health status and dependency availability.
+    Now includes actual service availability checks (MD-3182 fix).
     """
 
-    # Check dependencies
+    # Check dependencies (Python module imports)
     dependencies = {
         "utcp_workflow": False,
         "httpx": False,
@@ -174,20 +200,54 @@ async def health_check():
     except ImportError:
         pass
 
+    # MD-3182: Check actual service availability
+    import asyncio
+    service_checks = await asyncio.gather(
+        check_service("http://localhost:19803/health"),  # RAG Service
+        check_service("http://localhost:15001/health"),  # Workflow Service
+        check_service("http://localhost:18002/health"),  # Coordinator
+        check_service("http://localhost:18004/health"),  # Orchestration
+        check_service("http://localhost:18200/api/v2/heartbeat"),  # ChromaDB
+        return_exceptions=True
+    )
+
+    rag_available = service_checks[0] is True
+    workflow_available = service_checks[1] is True
+    coordinator_available = service_checks[2] is True
+    orchestration_available = service_checks[3] is True
+    chromadb_available = service_checks[4] is True
+
+    # Update chromadb dependency based on actual service availability
+    dependencies["chromadb"] = chromadb_available
+    dependencies["utcp_workflow"] = workflow_available and coordinator_available
+
+    # Determine features based on BOTH imports AND running services
+    features = {
+        "utcp_distributed_execution": dependencies["httpx"],
+        "rag_template_retrieval": rag_available and chromadb_available,
+        "workflow_execution": workflow_available,
+        "chromadb": chromadb_available,
+        "utcp_workflow": coordinator_available and orchestration_available,
+        "claude_sdk": dependencies["claude_agent_sdk"],
+    }
+
     # Determine overall status
-    critical_deps = ["utcp_workflow", "claude_agent_sdk"]
-    status = "healthy" if all(dependencies[dep] for dep in critical_deps) else "degraded"
+    critical_deps = ["claude_agent_sdk"]
+    critical_services = [workflow_available]
+
+    if all(dependencies.get(dep, False) for dep in critical_deps) and all(critical_services):
+        if all(features.values()):
+            status = "healthy"
+        else:
+            status = "degraded"
+    else:
+        status = "degraded"
 
     return HealthResponse(
         status=status,
         timestamp=datetime.now().isoformat(),
         version="1.0.0",
-        features={
-            "utcp_distributed_execution": dependencies["httpx"],
-            "rag_template_retrieval": dependencies["chromadb"],
-            "workflow_execution": dependencies["utcp_workflow"],
-            "claude_sdk": dependencies["claude_agent_sdk"],
-        },
+        features=features,
         dependencies=dependencies,
     )
 

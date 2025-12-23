@@ -1,0 +1,43 @@
+# Symphony Agent Modes Configuration
+#
+# EPIC: MD-4123 - Symphony Real LLM Integration
+# Configurable execution modes for workflow personas
+#
+# Each persona can operate in one of three modes:
+# - simple: Basic LLM with concise system prompt (fast, minimal context)
+# - full: Detailed system prompt with full context and schema
+# - full_rag: Full prompt enhanced with RAG-retrieved context
+
+# Default modes per persona
+# These can be overridden at runtime via the API
+persona_defaults:
+  sarah: full       # Product Owner - benefits from full context for requirements
+  marcus: full      # Architect - needs comprehensive context for design
+  alex: full_rag    # Developer - benefits from code examples via RAG
+  priya: full_rag   # QA Engineer - benefits from test patterns via RAG
+
+# Human-readable descriptions for each mode
+# Used by GET /symphony/modes endpoint
+mode_descriptions:
+  simple: "Basic prompt - fast, minimal context"
+  full: "Comprehensive prompt with full schema and guidelines"
+  full_rag: "Full prompt enhanced with RAG-retrieved context"
+
+# Default RAG configuration
+# Applied when FULL_RAG mode is used and RAG is enabled
+rag_defaults:
+  top_k: 5           # Number of similar documents to retrieve
+  min_score: 0.7     # Minimum similarity score (0.0 - 1.0)
+
+# Mode-specific configurations (optional, for future use)
+mode_config:
+  simple:
+    max_tokens: 2048      # Lower token limit for simple mode
+    temperature: 0.3      # More deterministic responses
+  full:
+    max_tokens: 4096      # Standard token limit
+    temperature: 0.5      # Balanced creativity
+  full_rag:
+    max_tokens: 6144      # Higher limit to accommodate RAG context
+    temperature: 0.5      # Balanced creativity
+    rag_context_max_chars: 3000  # Max characters from RAG context
